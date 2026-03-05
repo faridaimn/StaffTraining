@@ -1,0 +1,97 @@
+@using Testing.Components.Model
+<div class="card shadow-sm border-0 h-100">
+    <div class="card-header bg-dark text-white fw-bold">
+        @Title
+    </div>
+    <div class="card-body">
+        <!-- Tabular Report (Repeater pattern) -->
+        <table class="table table-sm table-bordered table-striped mb-4">
+            <thead class="table-light">
+                <tr>
+                    <th>Type</th>
+                    <th class="text-end" style="width: 100px;">Sub-total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Data == null || !Data.Any())
+                {
+                    <tr>
+                        <td colspan="2" class="text-center text-muted small">No data available</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Data)
+                    {
+                        <tr>
+                            <td>@item.Name</td>
+                            <td class="text-end fw-bold">
+                                @if (UseRedirect)
+                                {
+                                    <a href="@GetRedirectUrl(item.Name)" style="text-decoration: none;">@item.Count</a>
+                                }
+                                else if (UsePopUp)
+                                {
+                                    <a href="javascript:void(0)" @onclick="() => OnItemClick.InvokeAsync(item.Name)" style="text-decoration: none;">@item.Count</a>
+                                }
+                                else
+                                {
+                                    @item.Count
+                                }
+                            </td>
+                        </tr>
+                    }
+                    <tr class="table-secondary">
+                        <td class="text-end fw-bold">GRAND TOTAL:</td>
+                        <td class="text-end fw-bold text-primary fs-5">
+                            @if (UseRedirect)
+                            {
+                                <a href="@RedirectUrlBase" style="text-decoration: none;">@Data.Sum(x => x.Count)</a>
+                            }
+                            else if (UsePopUp)
+                            {
+                                <a href="javascript:void(0)" @onclick="() => OnItemClick.InvokeAsync(string.Empty)" style="text-decoration: none;">@Data.Sum(x => x.Count)</a>
+                            }
+                            else
+                            {
+                                @Data.Sum(x => x.Count)
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Graphical Chart Container -->
+        <div id="@ChartId" class="w-100 d-flex justify-content-center align-items-center bg-light border rounded" style="min-height: 350px;">
+            @if (Data == null || !Data.Any())
+            {
+                <span class="text-muted small">No chart data</span>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public string ChartId { get; set; } = "";
+
+    [Parameter]
+    public IEnumerable<StatItem> Data { get; set; } = Array.Empty<StatItem>();
+
+    [Parameter] public bool UseRedirect { get; set; } = false;
+    [Parameter] public string RedirectUrlBase { get; set; } = "";
+    [Parameter] public string RedirectQueryParam { get; set; } = "";
+
+    [Parameter] public bool UsePopUp { get; set; } = false;
+    [Parameter] public EventCallback<string> OnItemClick { get; set; }
+
+    private string GetRedirectUrl(string name)
+    {
+        if (string.IsNullOrEmpty(RedirectUrlBase) || string.IsNullOrEmpty(RedirectQueryParam)) return "#";
+        return $"{RedirectUrlBase}?{RedirectQueryParam}={Uri.EscapeDataString(name)}";
+    }
+}

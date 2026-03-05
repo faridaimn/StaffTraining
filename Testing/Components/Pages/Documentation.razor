@@ -1,0 +1,283 @@
+@page "/documentation"
+
+<PageTitle>Week 1 Documentation</PageTitle>
+
+<div class="container mt-4 mb-5 pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold text-primary"><i class="bi bi-journal-code me-2"></i> Week 1 Training: Step-by-Step Guide</h1>
+    </div>
+    
+    <p class="lead text-muted mb-5">This guide provides detailed, copy-pasteable code to build a complete Blazor CRUD application from scratch.</p>
+
+    <!-- PREREQUISITES -->
+    <div class="alert alert-warning shadow-sm mb-4">
+        <h5><i class="bi bi-tools me-2"></i> Required Software</h5>
+        <ul>
+            <li><strong>IDE:</strong> Visual Studio 2022</li>
+            <li><strong>Database Management:</strong> Aqua Data Studio</li>
+            <li><strong>Database Engine:</strong> SQL Server 2017 (MSSQLSERVER)</li>
+        </ul>
+        <p class="mb-0 small"><em>Note: For installation of SQL Server 2017 and Aqua Data Studio, please contact the Technical Team.</em></p>
+    </div>
+
+    <!-- STEP 1: DATABASE SETUP -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-dark text-white fw-bold fs-5">
+            Step 1: Setup Database (Aqua Data Studio)
+        </div>
+        <div class="card-body">
+            <h5 class="fw-bold text-secondary">A. Create Main Data Table</h5>
+            <p>Connect to <code>localhost</code> (MSSQLSERVER). First, create the main table to store user information. We use <code>IC_No</code> as the <strong>Primary Key</strong>.</p>
+            <pre class="bg-dark text-light p-3 border rounded"><code>
+CREATE TABLE EmployeeProfiles (
+    IC_No NVARCHAR(20) PRIMARY KEY, -- Unique ID for each person
+    PersonName NVARCHAR(100) NOT NULL,
+    DescriptionOfPerson NVARCHAR(500),
+    BirthDate DATE NOT NULL,
+    nationality_id INT NULL,
+    Gender NVARCHAR(10) NOT NULL,
+    Hobby NVARCHAR(200) NULL,
+    PersonPortraitPath NVARCHAR(255) NULL,
+    SupportingDocumentPath NVARCHAR(255) NULL
+);
+            </code></pre>
+        </div>
+    </div>
+
+    <!-- STEP 2: DEVELOP USER INTERFACE (CREATE MODELS AND UI) -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-primary text-white fw-bold fs-5">
+            Step 2: Develop User Interface (Visual Studio 2022)
+        </div>
+        <div class="card-body">
+            
+            <h5 class="fw-bold text-secondary">A. Create Data Model (C#)</h5>
+            <p>Create a file <code>Model/EmployeeProfile.cs</code> to map to the SQL table and calculate Age.</p>
+            <pre class="bg-dark text-light p-3 border rounded"><code>
+namespace Testing.Components.Model;
+
+public class EmployeeProfile
+{
+    public string IC_No { get; set; } = "";
+    public string PersonName { get; set; } = "";
+    public string? DescriptionOfPerson { get; set; }
+    public DateTime? BirthDate { get; set; }
+    public int? NationalityId { get; set; }
+    public string Gender { get; set; } = "";
+    public string? Hobby { get; set; }
+
+    // Auto-calculated Age based on BirthDate
+    public int? CurrentAge =&gt; BirthDate.HasValue 
+        ? DateTime.Today.Year - BirthDate.Value.Year 
+        : null;
+}
+            </code></pre>
+
+            <h5 class="fw-bold text-secondary mt-4">B. Create UI Page for Data Input</h5>
+            <p>Create a new file <code>Pages/User.razor</code> for the interface. This includes input text, multiline text, dates, radio buttons, checkboxes, and file uploads.</p>
+            <pre class="bg-dark text-light p-3 border rounded" style="max-height: 400px; overflow-y: auto;"><code>
+@@page "/user"
+@@using Testing.Components.Model
+
+&lt;h1&gt;Employee Registration&lt;/h1&gt;
+
+&lt;EditForm Model="@@editingEmployee" OnValidSubmit="SaveRecord"&gt;
+
+    &lt;!-- 1. Text Input --&gt;
+    &lt;label&gt;i. IC No (max 14 chars):&lt;/label&gt;
+    &lt;InputText @@bind-Value="editingEmployee.IC_No" maxlength="14" /&gt;
+
+    &lt;!-- 2. Text Input (Auto Upper Case via @@oninput) --&gt;
+    &lt;label&gt;ii. Person Name:&lt;/label&gt;
+    &lt;input type="text" value="@@editingEmployee.PersonName" @@oninput="HandleNameInput" /&gt;
+
+    &lt;!-- 3. Multiline Text Area --&gt;
+    &lt;label&gt;iii. Description:&lt;/label&gt;
+    &lt;InputTextArea @@bind-Value="editingEmployee.DescriptionOfPerson" rows="3" /&gt;
+
+    &lt;!-- 4. Date Picker --&gt;
+    &lt;label&gt;iv. Birth Date:&lt;/label&gt;
+    &lt;InputDate @@bind-Value="editingEmployee.BirthDate" /&gt;
+
+    &lt;!-- 5. Drop Down List --&gt;
+    &lt;label&gt;v. Nationality:&lt;/label&gt;
+    &lt;InputSelect @@bind-Value="editingEmployee.NationalityId"&gt;
+        &lt;option value="1"&gt;Malaysian&lt;/option&gt;
+    &lt;/InputSelect&gt;
+
+    &lt;!-- 6. Radio Button --&gt;
+    &lt;label&gt;vi. Gender:&lt;/label&gt;
+    &lt;InputRadioGroup @@bind-Value="editingEmployee.Gender"&gt;
+        &lt;InputRadio Value="@@("Male")" /&gt; Male
+        &lt;InputRadio Value="@@("Female")" /&gt; Female
+    &lt;/InputRadioGroup&gt;
+
+    &lt;!-- 7. Check Box --&gt;
+    &lt;label&gt;vii. Hobby:&lt;/label&gt;
+    &lt;input type="checkbox" /&gt; Reading
+
+    &lt;!-- 8. Auto System Date --&gt;
+    &lt;label&gt;viii. Today Date (Auto System Date):&lt;/label&gt;
+    &lt;input type="text" value="@@DateTime.Now.ToString("dd MMM yyyy HH:mm")" disabled /&gt;
+
+    &lt;!-- 9. Auto Calculation (Current Age) --&gt;
+    &lt;label&gt;ix. Current Age:&lt;/label&gt;
+    &lt;input type="text" value="@@editingEmployee.CurrentAge" disabled /&gt;
+
+    &lt;!-- 10. JPEG Picture Image --&gt;
+    &lt;label&gt;x. Person Portrait:&lt;/label&gt;
+    &lt;InputFile accept="image/jpeg" /&gt;
+
+    &lt;!-- 11. PDF Document Attachment --&gt;
+    &lt;label&gt;xi. Supporting Document:&lt;/label&gt;
+    &lt;InputFile accept="application/pdf" /&gt;
+
+    &lt;button type="submit"&gt;Create Record&lt;/button&gt;
+&lt;/EditForm&gt;
+
+@@code {
+    private EmployeeProfile editingEmployee = new();
+
+    private void HandleNameInput(ChangeEventArgs e)
+    {
+        // Auto Upper Case formatting
+        if (e.Value is string val) {
+            editingEmployee.PersonName = val.ToUpperInvariant();
+        }
+    }
+
+    private void SaveRecord()
+    {
+        // 1. Create Record Logic Here
+    }
+}
+            </code></pre>
+
+            <h5 class="fw-bold text-secondary mt-4">C. Working Functions (CRUD Service)</h5>
+            <p>Configure MSSQLSERVER Connection in <code>appsettings.json</code>:</p>
+            <pre class="bg-dark text-light p-3 border rounded"><code>
+"ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=YourDBName;Trusted_Connection=True;TrustServerCertificate=True;"
+}
+            </code></pre>
+            
+            <p>Create <code>Data/EmployeeService.cs</code> to establish connection and run SQL functions.</p>
+            <pre class="bg-dark text-light p-3 border rounded" style="max-height: 400px; overflow-y: auto;"><code>
+using Microsoft.Data.SqlClient;
+
+// 1. Create Record
+public async Task CreateEmployeeAsync(...) {
+    var query = "INSERT INTO EmployeeProfiles (IC_No) VALUES (@@IC_No)";
+    // Execute ...
+}
+
+// 2. Search & List & 7. Dynamic Search
+public async Task&lt;List&lt;EmployeeProfile&gt;&gt; GetEmployeesAsync(string? searchName = null) {
+    var query = "SELECT * FROM EmployeeProfiles WHERE 1=1";
+    if (!string.IsNullOrEmpty(searchName)) query += " AND PersonName LIKE @@Name";
+    // Execute Reader ...
+}
+
+// 3. Display Record Detail
+public async Task&lt;EmployeeProfile&gt; GetEmployeeByIdAsync(string icNo) {
+    var query = "SELECT * FROM EmployeeProfiles WHERE IC_No = @@IC_No";
+    // Execute Reader ...
+}
+
+// 4. Change & Update Record Value
+public async Task UpdateEmployeeAsync(...) {
+    var query = "UPDATE EmployeeProfiles SET PersonName = @@Name WHERE IC_No = @@IC_No";
+    // Execute ...
+}
+
+// 5. Delete Record
+public async Task DeleteEmployeeAsync(string icNo) {
+    var query = "DELETE FROM EmployeeProfiles WHERE IC_No = @@IC_No";
+    // Execute ...
+}
+            </code></pre>
+
+            <p><strong>6. Pop Alert Message:</strong> In Blazor, use Dependency Injection for JavaScript Interop.</p>
+            <pre class="bg-dark text-light p-3 border rounded"><code>
+@@inject IJSRuntime JSRuntime
+// INSIDE @@code:
+await JSRuntime.InvokeVoidAsync("alert", "Record Successfully Processed!");
+            </code></pre>
+        </div>
+    </div>
+
+    <!-- STEP 3: ENHANCE USER INTERFACE -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-success text-white fw-bold fs-5">
+            Step 3: Enhance User Interface
+        </div>
+        <div class="card-body">
+            
+            <h5 class="fw-bold text-secondary">A. Database Reference Table (Aqua Data Studio)</h5>
+            <p>Create a reference table for Dropdown list values containing Nationalities.</p>
+            <pre class="bg-dark text-light p-3 border rounded"><code>
+CREATE TABLE ref_nationality (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL
+);
+INSERT INTO ref_nationality (name) VALUES ('Malaysian');
+            </code></pre>
+
+            <h5 class="fw-bold text-secondary mt-4">B. Enhance user interfaces (Validations & Drops)</h5>
+            <p>Enhance the C# Model with validation attributes, forcing formats (like decimal values), and load the dropdown dynamically.</p>
+            <pre class="bg-dark text-light p-3 border rounded"><code>
+using System.ComponentModel.DataAnnotations;
+
+// 1. Validation of Data Length & Value
+[Required(ErrorMessage = "IC is Required")]
+[StringLength(14, MinimumLength = 12)]
+public string IC_No { get; set; } = "";
+
+// 2. Number with comma and decimal (In HTML UI)
+&lt;td&gt;@@myDecimal.ToString("N2")&lt;/td&gt;
+
+// 3. Dropdown Value List Retrieved from Reference Table
+@@code {
+    List&lt;RefNationality&gt; nats = new();
+    protected override async Task OnInitializedAsync() {
+        nats = await DbService.GetNationalitiesAsync(); // Populated from SQL
+    }
+}
+            </code></pre>
+
+            <h5 class="fw-bold text-secondary mt-4">C. Pre-Formatted Reports & A4 Printing</h5>
+            <p>To display numbers with decimals, format dates, truncate long text ("..."), and activate A4 printing with proper page breaks:</p>
+            <pre class="bg-dark text-light p-3 border rounded"><code>
+&lt;!-- 1. Long Text with ending of "..." --&gt;
+&lt;style&gt;
+    .text-truncate {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+&lt;/style&gt;
+&lt;td class="text-truncate"&gt;@@emp.DescriptionOfPerson&lt;/td&gt;
+
+&lt;!-- 2. Date & Time Formatting --&gt;
+&lt;td&gt;@@emp.BirthDate?.ToString("dd MMM yyyy")&lt;/td&gt;
+
+&lt;!-- 3. Display and Print Complete Record in A4 Size with Page Break --&gt;
+&lt;style type="text/css" media="print"&gt;
+    .d-print-none, nav, header { display: none !important; } /* Hide buttons */
+    @@page {
+        size: A4 portrait;
+        margin: 15mm;
+    }
+    .page-break { page-break-after: always; }
+    table { width: 100% !important; border-collapse: collapse; }
+&lt;/style&gt;
+
+&lt;!-- Activate Print Dialog --&gt;
+&lt;button class="d-print-none" @@onclick='() =&gt; JSRuntime.InvokeVoidAsync("window.print")'&gt;
+    Print Complete Record
+&lt;/button&gt;
+            </code></pre>
+        </div>
+    </div>
+</div>

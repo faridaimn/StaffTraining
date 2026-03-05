@@ -1,0 +1,244 @@
+@page "/dashboard"
+@using Testing.Components.Model
+@using Testing.Components.Data
+@inject EmployeeService DbService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard Statistics</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-graph-up-arrow text-primary me-2"></i> Statistics Dashboard</h1>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center p-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted"><em>Calculating statistics...</em></p>
+    </div>
+}
+else
+{
+    <!-- PERSON STATS -->
+    <h3 class="fw-bold mb-3 border-bottom pb-2 text-primary mt-4">
+        <i class="bi bi-people-fill me-2"></i> Person Statistics
+    </h3>
+    
+    <div class="row mb-5">
+        <!-- Gender -->
+        <div class="col-md-6 mb-4">
+            <StatCard Title="Total by Gender" ChartId="chart-gender" Data="@genderStats" 
+                UseRedirect="true" RedirectUrlBase="/users" RedirectQueryParam="searchGender" />
+        </div>
+        <!-- Nationality -->
+        <div class="col-md-6 mb-4">
+            <StatCard Title="Total by Nationality" ChartId="chart-nationality" Data="@nationalityStats" 
+                UseRedirect="true" RedirectUrlBase="/users" RedirectQueryParam="searchNationalityId" />
+        </div>
+        <!-- Marital Status -->
+        <div class="col-md-6 mb-4">
+            <StatCard Title="Total by Marital Status" ChartId="chart-marital" Data="@maritalStats" 
+                UseRedirect="true" RedirectUrlBase="/users" RedirectQueryParam="searchMaritalStatus" />
+        </div>
+        <!-- Birth Year -->
+        <div class="col-md-6 mb-4">
+            <StatCard Title="Total by Birth Year" ChartId="chart-birthyear" Data="@birthYearStats" 
+                UseRedirect="true" RedirectUrlBase="/users" RedirectQueryParam="searchBirthYear" />
+        </div>
+    </div>
+
+    <!-- VEHICLE STATS -->
+    <h3 class="fw-bold mb-3 border-bottom pb-2 text-success mt-4">
+        <i class="bi bi-car-front-fill me-2"></i> Vehicle Statistics
+    </h3>
+    
+    <div class="row mb-5">
+        <!-- Color -->
+        <div class="col-md-4 mb-4">
+            <StatCard Title="Total by Color" ChartId="chart-color" Data="@colorStats" 
+                UsePopUp="true" OnItemClick='(val) => OpenVehicleDrilldown("Color", val)' />
+        </div>
+        <!-- Brand -->
+        <div class="col-md-4 mb-4">
+            <StatCard Title="Total by Brand" ChartId="chart-brand" Data="@brandStats" 
+                UsePopUp="true" OnItemClick='(val) => OpenVehicleDrilldown("Brand", val)' />
+        </div>
+        <!-- Model -->
+        <div class="col-md-4 mb-4">
+            <StatCard Title="Total by Model" ChartId="chart-model" Data="@modelStats" 
+                UsePopUp="true" OnItemClick='(val) => OpenVehicleDrilldown("Model", val)' />
+        </div>
+    </div>
+
+    <!-- VEHICLE DRILLDOWN MODAL -->
+    @if (isVehicleModalOpen)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.6);">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content shadow-lg border-0">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title fw-bold">Vehicle Sub-Report: @drilldownTitle</h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="CloseVehicleDrilldown"></button>
+                    </div>
+                    <div class="modal-body bg-light">
+                        @if (drilldownVehicles == null)
+                        {
+                            <div class="text-center p-4">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        }
+                        else if (drilldownVehicles.Count == 0)
+                        {
+                            <div class="alert alert-warning text-center">No vehicles found.</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive rounded shadow-sm">
+                                <table class="table table-hover table-striped mb-0 align-middle table-bordered bg-white">
+                                    <thead class="table-dark text-center">
+                                        <tr>
+                                            <th>Owner Name</th>
+                                            <th>Vehicle No</th>
+                                            <th>Brand</th>
+                                            <th>Model</th>
+                                            <th>Color</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var veh in drilldownVehicles)
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">@veh.OwnerName</td>
+                                                <td class="text-center"><span class="badge bg-secondary">@veh.VehicleNo</span></td>
+                                                <td class="text-center">@veh.Brand</td>
+                                                <td class="text-center">@veh.Model</td>
+                                                <td class="text-center">@veh.Color</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary px-4 shadow-sm" @onclick="CloseVehicleDrilldown">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private bool isLoading = true;
+
+    private List<StatItem> genderStats = new();
+    private List<StatItem> nationalityStats = new();
+    private List<StatItem> maritalStats = new();
+    private List<StatItem> birthYearStats = new();
+
+    private List<StatItem> colorStats = new();
+    private List<StatItem> brandStats = new();
+    private List<StatItem> modelStats = new();
+
+    // Drilldown state
+    private bool isVehicleModalOpen = false;
+    private string drilldownTitle = "";
+    private List<Vehicle>? drilldownVehicles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStatistics();
+        isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!isLoading && firstRender == false)
+        {
+            // Delay slightly to ensure HTML StatCards are fully mounted in the DOM
+            await Task.Delay(100);
+            await RenderCharts();
+        }
+    }
+
+    private async Task LoadStatistics()
+    {
+        var persons = await DbService.GetEmployeesAsync();
+        var vehicles = await DbService.GetVehiclesAsync();
+
+        // Persons
+        genderStats = GroupData(persons, p => string.IsNullOrWhiteSpace(p.Gender) ? "Unknown" : p.Gender);
+        nationalityStats = GroupData(persons, p => string.IsNullOrWhiteSpace(p.NationalityName) ? "Unknown" : p.NationalityName);
+        maritalStats = GroupData(persons, p => string.IsNullOrWhiteSpace(p.MaritalStatus) ? "Unknown" : p.MaritalStatus);
+        birthYearStats = GroupData(persons, p => p.BirthDate.HasValue ? p.BirthDate.Value.Year.ToString() : "Unknown");
+
+        // Vehicles
+        colorStats = GroupData(vehicles, v => string.IsNullOrWhiteSpace(v.Color) ? "Unknown" : v.Color);
+        brandStats = GroupData(vehicles, v => string.IsNullOrWhiteSpace(v.Brand) ? "Unknown" : v.Brand);
+        modelStats = GroupData(vehicles, v => string.IsNullOrWhiteSpace(v.Model) ? "Unknown" : v.Model);
+    }
+
+    private async Task RenderCharts()
+    {
+        try
+        {
+            await RenderSingleChart("chart-gender", "column2d", "Person by Gender", "Gender", "Count", genderStats);
+            await RenderSingleChart("chart-nationality", "column2d", "Person by Nationality", "Nationality", "Count", nationalityStats);
+            await RenderSingleChart("chart-marital", "column2d", "Person by Marital Status", "Marital Status", "Count", maritalStats);
+            await RenderSingleChart("chart-birthyear", "column2d", "Person by Birth Year", "Birth Year", "Count", birthYearStats);
+
+            await RenderSingleChart("chart-color", "bar2d", "Vehicle by Color", "Count", "Color", colorStats);
+            await RenderSingleChart("chart-brand", "column2d", "Vehicle by Brand", "Brand", "Count", brandStats);
+            await RenderSingleChart("chart-model", "column2d", "Vehicle by Model", "Model", "Count", modelStats);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error rendering charts: {ex.Message}");
+        }
+    }
+
+    private async Task RenderSingleChart(string id, string type, string caption, string xAxis, string yAxis, List<StatItem> data)
+    {
+        if(data == null || data.Count == 0) return;
+        
+        string subCaption = "Count distribution";
+        var formattedData = data.Select(x => new { label = x.Name, value = x.Count }).ToList();
+        
+        // Call the JS interop function written in charting.js
+        await JSRuntime.InvokeVoidAsync("renderFusionChart", id, type, caption, subCaption, xAxis, yAxis, formattedData);
+    }
+
+    private List<StatItem> GroupData<T>(IEnumerable<T> source, Func<T, string> keySelector)
+    {
+        return source.GroupBy(keySelector)
+                     .Select(g => new StatItem { Name = g.Key, Count = g.Count() })
+                     .OrderByDescending(x => x.Count)
+                     .ToList();
+    }
+
+    private async Task OpenVehicleDrilldown(string type, string value)
+    {
+        isVehicleModalOpen = true;
+        drilldownVehicles = null; // show loader
+        drilldownTitle = string.IsNullOrEmpty(value) ? $"All {type}s" : $"{type}: {value}";
+        
+        // Fetch specific data
+        string? dColor = type == "Color" && !string.IsNullOrEmpty(value) ? value : null;
+        string? dBrand = type == "Brand" && !string.IsNullOrEmpty(value) ? value : null;
+        string? dModel = type == "Model" && !string.IsNullOrEmpty(value) ? value : null;
+
+        drilldownVehicles = await DbService.GetVehiclesAsync(null, null, dColor, dBrand, dModel);
+    }
+
+    private void CloseVehicleDrilldown()
+    {
+        isVehicleModalOpen = false;
+        drilldownVehicles = null;
+    }
+}

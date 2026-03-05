@@ -1,0 +1,13 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\Acer\source\repos\Testing\Testing\Components\Pages\User.razor(265,19): error RZ1016: The 'page' directive expects a string surrounded by double quotes. [C:\Users\Acer\source\repos\Testing\Testing\Testing.csproj]
+C:\Users\Acer\source\repos\Testing\Testing\Components\Pages\User.razor(248,10): error CS0103: The name 'media' does not exist in the current context [C:\Users\Acer\source\repos\Testing\Testing\Testing.csproj]
+
+Build FAILED.
+
+C:\Users\Acer\source\repos\Testing\Testing\Components\Pages\User.razor(265,19): error RZ1016: The 'page' directive expects a string surrounded by double quotes. [C:\Users\Acer\source\repos\Testing\Testing\Testing.csproj]
+C:\Users\Acer\source\repos\Testing\Testing\Components\Pages\User.razor(248,10): error CS0103: The name 'media' does not exist in the current context [C:\Users\Acer\source\repos\Testing\Testing\Testing.csproj]
+    0 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:01.51

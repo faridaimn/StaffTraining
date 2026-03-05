@@ -1,0 +1,299 @@
+@page "/vehicles"
+@using Testing.Components.Model
+@using Testing.Components.Data
+@inject EmployeeService DbService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Vehicle Management</PageTitle>
+
+<!-- MAIN SCREEN UI -->
+@if (!isFormVisible)
+{
+    <div id="searchAndListSection">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Vehicle Profiles</h1>
+            <button class="btn btn-success btn-lg shadow" @onclick="ShowCreateForm">
+                + Add Vehicle
+            </button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger shadow-sm">@ErrorMessage</div>
+        }
+
+        <!-- Search & List Section -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white">List of User Vehicles</div>
+    <div class="card-body bg-light">
+        
+        <div class="row mb-4 align-items-end p-3 bg-white border rounded shadow-sm">
+            <div class="col-md-4">
+                <label class="fw-bold text-muted small">Search by Owner IC</label>
+                <input type="text" class="form-control border-primary" @bind="searchOwnerIC" @bind:event="oninput" @onkeyup="SearchDynamic" placeholder="IC No..." />
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold text-muted small">Search by Vehicle No</label>
+                <input type="text" class="form-control" @bind="searchVehicleNo" @bind:event="oninput" @onkeyup="SearchDynamic" placeholder="Target Vehicle No..." />
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-primary px-4 shadow-sm" @onclick="LoadData">Search</button>
+                <button class="btn btn-outline-secondary ms-2 shadow-sm" @onclick="ClearSearch">Clear</button>
+            </div>
+        </div>
+
+        @if (VehiclesList == null)
+        {
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted"><em>Loading records...</em></p>
+            </div>
+        }
+        else if (VehiclesList.Count == 0)
+        {
+            <div class="alert alert-warning text-center shadow-sm">
+                No vehicles found matching your criteria.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive rounded shadow-sm">
+                <table class="table table-hover table-striped mb-0 align-middle table-bordered bg-white">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th>Owner Name</th>
+                            <th>Owner IC</th>
+                            <th>Vehicle No</th>
+                            <th>Brand</th>
+                            <th>Model</th>
+                            <th>Color</th>
+                            <th style="min-width: 150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var veh in VehiclesList)
+                        {
+                            <tr>
+                                <td class="fw-bold">@veh.OwnerName</td>
+                                <td class="text-center">@veh.Owner_IC</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary fs-6">@veh.VehicleNo</span>
+                                </td>
+                                <td class="text-center">@veh.Brand</td>
+                                <td class="text-center">@veh.Model</td>
+                                <td class="text-center">@veh.Color</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-warning text-dark mx-1 shadow-sm" @onclick="() => EditRecord(veh.VehicleID)">Edit</button>
+                                    <button class="btn btn-sm btn-danger shadow-sm" @onclick="() => DeleteRecord(veh.VehicleID)">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- FORM SECTION -->
+@if (isFormVisible)
+{
+    <div id="formSection">
+        <div class="card shadow-lg border-0">
+            <div class="card-header @(isEditing ? "bg-warning" : "bg-primary text-white") d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    @(isEditing ? "Edit Vehicle" : "Add New Vehicle")
+                </h5>
+                <button type="button" class="btn btn-sm btn-light shadow-sm fw-bold" @onclick="ResetForm">
+                    <i class="bi bi-arrow-return-left"></i> Back to List
+                </button>
+            </div>
+            <div class="card-body bg-light">
+                
+                <EditForm Model="@editingVehicle" OnValidSubmit="SaveRecord" FormName="vehicleForm">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger shadow-sm p-2" />
+
+                        <div class="card p-3 mb-3 border-0 shadow-sm">
+                            <h6 class="border-bottom pb-2 mb-3 fw-bold text-secondary">Owner Assignment</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="fw-bold small text-muted">Select Owner / Employee</label>
+                                    <InputSelect class="form-select border-primary fw-bold" @bind-Value="editingVehicle.Owner_IC">
+                                        <option value="">-- Select Owner --</option>
+                                        @foreach (var emp in EmployeesList ?? new())
+                                        {
+                                            <option value="@emp.IC_No">@emp.PersonName (IC: @emp.IC_No)</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card p-3 mb-3 border-0 shadow-sm">
+                            <h6 class="border-bottom pb-2 mb-3 fw-bold text-secondary">Vehicle Details</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Vehicle No</label>
+                                    <input type="text" class="form-control text-uppercase" value="@editingVehicle.VehicleNo" @oninput="HandleVehicleNoInput" maxlength="20" placeholder="e.g. WAA 1234" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Brand</label>
+                                    <InputText class="form-control" @bind-Value="editingVehicle.Brand" maxlength="50" placeholder="e.g. Toyota" />
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Model</label>
+                                    <InputText class="form-control" @bind-Value="editingVehicle.Model" maxlength="50" placeholder="e.g. Camry" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Color</label>
+                                    <InputText class="form-control" @bind-Value="editingVehicle.Color" maxlength="50" placeholder="e.g. White" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer px-0 pb-0 mt-4 border-top-0 d-flex justify-content-end bg-transparent">
+                            <button type="button" class="btn btn-secondary px-4 shadow-sm me-2" @onclick="ResetForm">Back to Search</button>
+                            <button type="submit" class="btn btn-success px-5 shadow-sm fw-bold">@(isEditing ? "Save Changes" : "Register Vehicle")</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+}
+
+@code {
+    private List<Vehicle>? VehiclesList;
+    private List<EmployeeProfile>? EmployeesList;
+    private Vehicle editingVehicle = new();
+    
+    // server-side visibility flags
+    private bool isFormVisible = false;
+    private bool isEditing = false;
+
+    // Search filters
+    [SupplyParameterFromQuery] public string? searchOwnerIC { get; set; }
+    [SupplyParameterFromQuery] public string? searchVehicleNo { get; set; }
+    [SupplyParameterFromQuery] public string? searchColor { get; set; }
+    [SupplyParameterFromQuery] public string? searchBrand { get; set; }
+    [SupplyParameterFromQuery] public string? searchModel { get; set; }
+    
+    private string? ErrorMessage = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch users for dropdown assignment
+        EmployeesList = await DbService.GetEmployeesAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        VehiclesList = await DbService.GetVehiclesAsync(searchOwnerIC, searchVehicleNo, searchColor, searchBrand, searchModel);
+    }
+
+    private async Task SearchDynamic(KeyboardEventArgs e)
+    {
+        await LoadData();
+    }
+
+    private async Task ClearSearch()
+    {
+        searchOwnerIC = "";
+        searchVehicleNo = "";
+        searchColor = "";
+        searchBrand = "";
+        searchModel = "";
+        await LoadData();
+    }
+
+    private void ShowCreateForm()
+    {
+        editingVehicle = new Vehicle();
+        isEditing = false;
+        isFormVisible = true;
+    }
+
+    private void HandleVehicleNoInput(ChangeEventArgs e)
+    {
+        if (e.Value is string val)
+        {
+            editingVehicle.VehicleNo = val.ToUpperInvariant();
+        }
+    }
+
+    private async Task SaveRecord()
+    {
+        try
+        {
+            ErrorMessage = null;
+            if (isEditing)
+            {
+                await DbService.UpdateVehicleAsync(editingVehicle);
+                await JSRuntime.InvokeVoidAsync("alert", "Vehicle Updated Successfully!");
+            }
+            else
+            {
+                await DbService.CreateVehicleAsync(editingVehicle);
+                await JSRuntime.InvokeVoidAsync("alert", "Vehicle Registered Successfully!");
+            }
+
+            ResetForm();
+            await LoadData();
+        }
+        catch(Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Save failed: {ex.Message}");
+            ErrorMessage = $"System Error: {ex.Message}";
+        }
+    }
+
+    private async Task EditRecord(int vehicleId)
+    {
+        var records = await DbService.GetVehiclesAsync();
+        var rec = records.FirstOrDefault(r => r.VehicleID == vehicleId);
+        if (rec != null)
+        {
+            editingVehicle = rec;
+            isEditing = true;
+            isFormVisible = true;
+        }
+    }
+
+    private async Task DeleteRecord(int vehicleId)
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete this vehicle?");
+        if (confirm)
+        {
+            try
+            {
+                await DbService.DeleteVehicleAsync(vehicleId);
+                await JSRuntime.InvokeVoidAsync("alert", "Vehicle Deleted Successfully!");
+                ResetForm();
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Delete failed: {ex.Message}");
+            }
+        }
+    }
+
+    private void ResetForm()
+    {
+        editingVehicle = new Vehicle();
+        isEditing = false;
+        isFormVisible = false;
+    }
+}

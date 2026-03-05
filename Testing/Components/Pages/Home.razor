@@ -1,0 +1,41 @@
+﻿@page "/"
+
+<PageTitle>Dashboard</PageTitle>
+
+<div class="container mt-5">
+    <div class="p-5 bg-light rounded-3 shadow-sm mb-4">
+        <h1 class="display-5 fw-bold text-primary">ABCDE Main Modules</h1>
+        <p class="lead text-muted">Please select an application module below to proceed.</p>
+        <hr class="my-4">
+        
+        <div class="d-flex flex-wrap gap-3 mt-4">
+            <a class="btn btn-primary btn-lg shadow-sm" href="/users" role="button">
+                <i class="bi bi-people-fill me-2"></i> Employee Profiles
+            </a>
+            <a class="btn btn-primary btn-lg shadow-sm" href="/vehicles" role="button">
+                <i class="bi bi-car-front-fill me-2"></i> Vehicles Management
+            </a>
+            <a class="btn btn-primary btn-lg shadow-sm" href="/dashboard" role="button">
+                <i class="bi bi-graph-up me-2"></i> Statistics Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Orientation Section -->
+    <div class="p-5 border border-success border-2 bg-white rounded-3 shadow-sm mt-4">
+        <h2 class="fw-bold text-success"><i class="bi bi-journal-code me-2"></i> New Developer Task (Orientation)</h2>
+        <p class="mb-4 text-muted"><strong>Requirement:</strong> Employee of Less Than 1 Year of Programming Experience</p>
+        
+        <div class="d-flex flex-wrap gap-3">
+            <a class="btn btn-outline-success btn-lg" href="/documentation" role="button">
+                <i class="bi bi-book-half me-2"></i> Read Week 1 Docs
+            </a>
+            <a class="btn btn-outline-success btn-lg" href="/documentation/week2" role="button">
+                <i class="bi bi-journal-check me-2"></i> Read Week 2 Docs
+            </a>
+            <a class="btn btn-outline-success btn-lg" href="/documentation/week3" role="button">
+                <i class="bi bi-eye-slash me-2"></i> Read Week 3 Docs
+            </a>
+        </div>
+    </div>
+</div>
