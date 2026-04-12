@@ -1,0 +1,25 @@
+/* c:\Users\Acer\source\repos\Testing\Testing\wwwroot\css\custom.css */
+
+/* Global Styling */
+
+/* Make form labels slightly bolder and more distinguished */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+/* Zebra Striping Optimization for Tables */
+/* Bootstrap has table-striped, but here's a custom variant matching syllabus requirement */
+.table-zebra tbody tr:nth-of-type(odd) {
+    background-color: #f8f9fc;
+}
+.table-zebra tbody tr:hover {
+    background-color: #e2e6ea;
+}
+
+/* Modal Enhancements */
+.modal-header.bg-theme {
+    background-color: #198754;
+    color: #fff;
+}

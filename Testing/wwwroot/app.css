@@ -49,3 +49,18 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.sticky-footer {
+    position: fixed;
+    bottom: 0;
+    left: 250px;
+    right: 0;
+    background: white;
+    padding: 12px 24px;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.form-content-wrapper {
+    padding-bottom: 80px;
+}

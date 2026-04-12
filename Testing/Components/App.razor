@@ -14,16 +14,36 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <HeadOutlet />
+
     <!-- FusionCharts Core -->
-    <script type="text/javascript" src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js"></script>
-    <script type="text/javascript" src="https://cdn.fusioncharts.com/fusioncharts/latest/themes/fusioncharts.theme.fusion.js"></script>
+    <script src="js/fusioncharts/fusioncharts.js"></script>
+    <script src="js/fusioncharts/fusioncharts.charts.js"></script>
+    <script src="js/fusioncharts/fusioncharts.theme.fusion.js"></script>
 </head>
 
 <body>
     <Routes />
     <script src="_framework/blazor.web.js"></script>
-    <!-- Custom JS for Charting Interop -->
+
+    <!-- Custom JS -->
     <script src="js/charting.js"></script>
+    <script src="js/printHelper.js"></script>
+    <script>
+        window.renderFusionChart = (containerId, chartConfig) => {
+            if (typeof FusionCharts !== 'undefined') {
+                new FusionCharts(chartConfig).render();
+            } else {
+                console.error('FusionCharts not loaded');
+            }
+        };
+
+        // Force reload charts on page refresh
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.dotNetReference) {
+                window.dotNetReference.invokeMethodAsync('RefreshCharts');
+            }
+        });
+    </script>
 </body>
 
 </html>

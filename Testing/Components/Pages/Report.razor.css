@@ -1,0 +1,377 @@
+﻿.stat-section {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.stat-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.stat-card-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .stat-card-header .badge-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+
+    .stat-card-header h5 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+    }
+
+    .stat-card-header span.sub {
+        font-size: 12px;
+        opacity: 0.65;
+    }
+
+/* ---- Tabular ---- */
+.stat-table {
+    width: 100%;
+    font-size: 13.5px;
+    border-collapse: collapse;
+}
+
+    .stat-table thead th {
+        background: #f8fafc;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 9px 14px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .stat-table tbody td {
+        padding: 9px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+    }
+
+    .stat-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .stat-table tbody tr:hover td {
+        background: #f8fafc;
+    }
+
+    .stat-table .type-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+        letter-spacing: 0.02em;
+    }
+
+.badge-gender {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.badge-nationality {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-marital {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-birth {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.progress-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease;
+}
+
+.pct-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    min-width: 38px;
+    text-align: right;
+}
+
+.subtotal-row td {
+    background: #f1f5f9 !important;
+    font-weight: 700;
+    color: #0f172a !important;
+    border-top: 2px solid #cbd5e1 !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    font-size: 13px;
+}
+
+.grandtotal-row td {
+    background: #1e293b !important;
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 13px;
+    border-top: 2px solid #334155 !important;
+}
+
+.count-cell {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+/* ---- Chart container ---- */
+.chart-container {
+    padding: 16px 20px 20px;
+    border-top: 1px solid #e2e8f0;
+    background: #fafafa;
+}
+
+.chart-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+
+/* ===== GRAND TOTAL CARD ===== */
+.grand-total-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 16px;
+    padding: 24px 32px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.02);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.grand-total-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.grand-total-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.grand-total-text {
+    flex: 1;
+}
+
+.grand-total-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.grand-total-value {
+    display: block;
+    font-size: 48px;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.grand-total-sub {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.grand-total-stats {
+    display: flex;
+    gap: 16px;
+}
+
+.stat-badge {
+    background: rgba(255,255,255,0.08);
+    padding: 10px 18px;
+    border-radius: 40px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.stat-badge-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #94a3b8;
+    margin-bottom: 2px;
+}
+
+.stat-badge-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .grand-total-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .grand-total-stats {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .grand-total-value {
+        font-size: 36px;
+    }
+}
+
+/* Vehicle Section Title */
+.vehicle-section {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #e2e8f0;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.section-title-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.section-title-text {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.3px;
+}
+
+.section-title-sub {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.user-section {
+    margin-bottom: 24px;
+}
+
+    .user-section .section-title-icon {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    }
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0;
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: -2px;
+}
+
+    .tab-btn i {
+        font-size: 18px;
+    }
+
+    .tab-btn:hover {
+        color: #334155;
+    }
+
+    .tab-btn.active {
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+    }
+
+.tab-content {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

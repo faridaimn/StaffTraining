@@ -1,0 +1,203 @@
+﻿@page "/personlist"
+@page "/personlist/{gender}"
+@page "/personlist/all"
+@page "/personlist/nationality/{nationalityName}"
+@using Testing.Components.Shared
+@using Testing.Components.Data
+@using Testing.Components.Model
+@rendermode InteractiveServer
+@inject EmployeeService DbService
+@inject NavigationManager Navigation
+
+<VehicleModal IsVisible="@showModal"
+              PersonName="@popupPersonName"
+              Vehicles="@popupVehicles"
+              OnClose="@(() => showModal = false)" />
+
+
+<h3>
+    Person List @(
+        Gender == "all" ? "- All" :
+        Gender == "hasGender" ? "" :
+        !string.IsNullOrEmpty(NationalityName) ? $"- {NationalityName}" :
+        !string.IsNullOrEmpty(Gender) ? $"- {Gender}" : ""
+        )
+</h3>
+
+@{
+    var totalRecords = persons?.Count ?? 0;
+    var withVehicles = persons?.Count(p => (p.Vehicles?.Count ?? 0) > 0) ?? 0;
+    var totalVehicles = persons?.Sum(p => p.Vehicles?.Count ?? 0) ?? 0;
+}
+
+<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:1.5rem;">
+    <div style="background:#E6F1FB; border-radius:8px; padding:1rem; border:1px solid #dee2e6;">
+        <div style="font-size:12px; color:#6c757d; margin-bottom:6px;">Total records</div>
+        <div style="font-size:22px; font-weight:500;">@totalRecords</div>
+    </div>
+    <div style="background:#E6F1FB; border-radius:8px; padding:1rem; border:1px solid #dee2e6;">
+        <div style="font-size:12px; color:#6c757d; margin-bottom:6px;">With vehicles</div>
+        <div style="font-size:22px; font-weight:500;">@withVehicles</div>
+    </div>
+    <div style="background:#E6F1FB; border-radius:8px; padding:1rem; border:1px solid #dee2e6;">
+        <div style="font-size:12px; color:#6c757d; margin-bottom:6px;">Total vehicles</div>
+        <div style="font-size:22px; font-weight:500;">@totalVehicles</div>
+    </div>
+</div>
+
+@if (persons == null)
+{
+    <p>Loading...</p>
+}
+else if (persons.Count == 0)
+{
+    <p>No records found for gender: @Gender</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>IC No</th>
+                    <th>Name</th>
+                    <th>Gender</th>
+                    <th>Birth Year</th>
+                    <th>Nationality</th>
+                    <th>Vehicle Count</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var person in persons)
+                {
+                    var vehicleCount = person.Vehicles?.Count ?? 0;
+                    <tr>
+                        <td>@person.IC_No</td>
+                        <td>@person.PersonName</td>
+                        <td style="text-align:center; vertical-align:middle;">
+                            @if (person.Gender == "Male")
+                            {
+                                <span style="display:inline-block; font-size:11px; padding:2px 10px; border-radius:999px; background:#E6F1FB; color:#0C447C;">Male</span>
+                            }
+                            else if (person.Gender == "Female")
+                            {
+                                <span style="display:inline-block; font-size:11px; padding:2px 10px; border-radius:999px; background:#FBEAF0; color:#72243E;">Female</span>
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
+                        <td>@(person.BirthDate?.Year.ToString() ?? "-")</td>
+                        <td>@GetNationalityName(person.nationality_id)</td>
+                        <td style="text-align:center; vertical-align:middle;">
+                            <div style="display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;" @onclick="() => ShowVehiclePopup(person.IC_No, person.PersonName)">
+                                <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
+                                    <path d="M4.5 6L6.5 2H15.5L17.5 6" stroke="#185FA5" stroke-width="1.4" stroke-linecap="round" />
+                                    <rect x="1" y="6" width="20" height="7" rx="2" fill="#185FA5" fill-opacity="0.15" stroke="#185FA5" stroke-width="1.4" />
+                                    <circle cx="5" cy="13" r="2" fill="#185FA5" />
+                                    <circle cx="17" cy="13" r="2" fill="#185FA5" />
+                                    <rect x="7" y="7.5" width="3.5" height="2.5" rx="0.5" fill="#185FA5" fill-opacity="0.5" />
+                                    <rect x="11.5" y="7.5" width="3.5" height="2.5" rx="0.5" fill="#185FA5" fill-opacity="0.5" />
+                                </svg>
+                                <span style="font-weight:500; color:#185FA5;">@vehicleCount</span>
+                            </div>
+                        </td>
+                        <td style="text-align:center;">
+                            <button class="btn btn-sm btn-info" @onclick="() => ViewPersonDetail(person.IC_No)">
+                                View Full Details
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Gender { get; set; }
+    [Parameter] public string? NationalityName { get; set; }
+
+    private List<Vehicle> popupVehicles = new();
+    private List<EmployeeProfile>? persons;
+
+    private bool showModal = false;
+
+    private string popupPersonName = "";
+
+    private Dictionary<int, string> nationalityMap = new();
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadNationalities();
+        await LoadPersons();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    private async Task LoadNationalities()
+    {
+        var nationalities = await DbService.GetNationalitiesAsync();
+        nationalityMap = nationalities.ToDictionary(n => n.Id, n => n.Name);
+    }
+
+    private async Task LoadPersons()
+    {
+        var allEmployees = await DbService.GetEmployeesAsync();
+
+        if (!string.IsNullOrEmpty(NationalityName))
+        {
+            persons = allEmployees.Where(e =>
+                e.nationality_id.HasValue &&
+                nationalityMap.ContainsKey(e.nationality_id.Value) &&
+                nationalityMap[e.nationality_id.Value] == NationalityName
+            ).ToList();
+        }
+        else if (Gender == "hasNationality")
+        {
+            persons = allEmployees.Where(e => e.nationality_id.HasValue).ToList();
+        }
+        else if (Gender == "hasGender")
+        {
+            persons = allEmployees.Where(e => !string.IsNullOrEmpty(e.Gender)).ToList();
+        }
+        else if (Gender == "all" || string.IsNullOrEmpty(Gender))
+        {
+            persons = allEmployees;
+        }
+        else
+        {
+            persons = allEmployees.Where(e => e.Gender == Gender).ToList();
+        }
+    }
+
+    private string GetNationalityName(int? id)
+    {
+        if (id.HasValue && nationalityMap.ContainsKey(id.Value))
+            return nationalityMap[id.Value];
+        return "-";
+    }
+
+    private void ViewPersonDetail(string icNo)
+    {
+        Navigation.NavigateTo($"/users?ic={icNo}", forceLoad: true);
+    }
+
+    private void GoToVehicle(string icNo)
+    {
+        Navigation.NavigateTo("/users?ic=" + icNo + "&tab=vehicle&source=personlistpage");
+    }
+
+    private void ShowVehiclePopup(string icNo, string name)
+    {
+        var person = persons.FirstOrDefault(p => p.IC_No == icNo);
+        popupVehicles = person?.Vehicles ?? new List<Vehicle>();
+        popupPersonName = name;
+        showModal = true;
+    }
+}

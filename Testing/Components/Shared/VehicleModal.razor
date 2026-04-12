@@ -1,0 +1,58 @@
+﻿@using Testing.Components.Model
+
+@if (IsVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1"
+         style="background:rgba(0,0,0,0.5); display:flex !important; align-items:center; justify-content:center;">
+        <div class="modal-dialog modal-lg" style="width:60%; max-width:800px; min-width:500px;">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Vehicles — @PersonName</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if (Vehicles.Any())
+                    {
+                        <table class="table table-bordered table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Vehicle No</th>
+                                    <th>Color</th>
+                                    <th>Brand</th>
+                                    <th>Model</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var v in Vehicles)
+                                {
+                                    <tr>
+                                        <td>@v.VehicleNo</td>
+                                        <td>@v.Color</td>
+                                        <td>@v.brand</td>
+                                        <td>@v.Model</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No vehicles found.</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="Close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public string PersonName { get; set; } = "";
+    [Parameter] public List<Vehicle> Vehicles { get; set; } = new();
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task Close() => await OnClose.InvokeAsync();
+}

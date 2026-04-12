@@ -7,13 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BlazorFusionCharts" Version="1.0.1" />
     <PackageReference Include="LangChain.Extensions.DependencyInjection" Version="0.17.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Components\Data\" />
-    <Folder Include="Components\Model\" />
+    <Folder Include="Components\NewFolder\" />
+    <Folder Include="wwwroot\js\NewFolder\" />
   </ItemGroup>
 
 </Project>
