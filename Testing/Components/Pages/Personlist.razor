@@ -2,6 +2,8 @@
 @page "/personlist/{gender}"
 @page "/personlist/all"
 @page "/personlist/nationality/{nationalityName}"
+@page "/personlist/marital/{maritalStatus}"          
+@page "/personlist/birthyear/{birthYear}"
 @using Testing.Components.Shared
 @using Testing.Components.Data
 @using Testing.Components.Model
@@ -16,12 +18,16 @@
 
 
 <h3>
-    Person List @(
-        Gender == "all" ? "- All" :
-        Gender == "hasGender" ? "" :
+    Person List
+    @(!string.IsNullOrEmpty(MaritalStatus) ? $"- Marital: {MaritalStatus}" :
+        !string.IsNullOrEmpty(BirthYear) ? $"- Birth Year: {BirthYear}" :
         !string.IsNullOrEmpty(NationalityName) ? $"- {NationalityName}" :
-        !string.IsNullOrEmpty(Gender) ? $"- {Gender}" : ""
-        )
+        Gender == "all" ? "- All" :
+        Gender == "hasGender" ? "- Has Gender" :
+        Gender == "hasNationality" ? "- Has Nationality" :
+        Gender == "hasMarital" ? "- Has Marital Status" :
+        Gender == "hasBirthYear" ? "- Has Birth Year" :
+        !string.IsNullOrEmpty(Gender) ? $"- {Gender}" : "")
 </h3>
 
 @{
@@ -51,7 +57,18 @@
 }
 else if (persons.Count == 0)
 {
-    <p>No records found for gender: @Gender</p>
+    string filterType = "";
+    if (!string.IsNullOrEmpty(MaritalStatus)) filterType = $"marital status: {MaritalStatus}";
+    else if (!string.IsNullOrEmpty(BirthYear)) filterType = $"birth year: {BirthYear}";
+    else if (!string.IsNullOrEmpty(NationalityName)) filterType = $"nationality: {NationalityName}";
+    else if (!string.IsNullOrEmpty(Gender) && Gender != "all" && Gender != "hasGender" && Gender != "hasNationality" && Gender != "hasMarital" && Gender != "hasBirthYear")
+        filterType = $"gender: {Gender}";
+    else if (Gender == "hasGender") filterType = "gender (has value)";
+    else if (Gender == "hasNationality") filterType = "nationality (has value)";
+    else if (Gender == "hasMarital") filterType = "marital status (has value)";
+    else if (Gender == "hasBirthYear") filterType = "birth year (has value)";
+
+    <p>No records found for @filterType</p>
 }
 else
 {
@@ -62,6 +79,7 @@ else
                     <th>IC No</th>
                     <th>Name</th>
                     <th>Gender</th>
+                    <th>Marital Status</th>     
                     <th>Birth Year</th>
                     <th>Nationality</th>
                     <th>Vehicle Count</th>
@@ -83,6 +101,45 @@ else
                             else if (person.Gender == "Female")
                             {
                                 <span style="display:inline-block; font-size:11px; padding:2px 10px; border-radius:999px; background:#FBEAF0; color:#72243E;">Female</span>
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
+                        <td style="text-align:center; vertical-align:middle;">
+                            @if (!string.IsNullOrEmpty(person.MaritalStatus))
+                            {
+                                string bgColor = "";
+                                string textColor = "";
+
+                                switch (person.MaritalStatus)
+                                {
+                                    case "Single":
+                                        bgColor = "#FEF3C7";
+                                        textColor = "#92400E";
+                                        break;
+                                    case "Married":
+                                        bgColor = "#D1FAE5";
+                                        textColor = "#065F46";
+                                        break;
+                                    case "Divorced":
+                                        bgColor = "#F3F4F6";
+                                        textColor = "#374151";
+                                        break;
+                                    case "Widowed":
+                                        bgColor = "#E9D5FF";
+                                        textColor = "#6B21A8";
+                                        break;
+                                    default:
+                                        bgColor = "#F3F4F6";
+                                        textColor = "#374151";
+                                        break;
+                                }
+
+                                <span style="display:inline-block; font-size:11px; padding:2px 10px; border-radius:999px; background:@bgColor; color:@textColor;">
+                                    @person.MaritalStatus
+                                </span>
                             }
                             else
                             {
@@ -119,6 +176,8 @@ else
 @code {
     [Parameter] public string? Gender { get; set; }
     [Parameter] public string? NationalityName { get; set; }
+    [Parameter] public string? MaritalStatus { get; set; }      
+    [Parameter] public string? BirthYear { get; set; }
 
     private List<Vehicle> popupVehicles = new();
     private List<EmployeeProfile>? persons;
@@ -150,7 +209,21 @@ else
     {
         var allEmployees = await DbService.GetEmployeesAsync();
 
-        if (!string.IsNullOrEmpty(NationalityName))
+        // Filter by Birth Year
+        if (!string.IsNullOrEmpty(BirthYear))
+        {
+            persons = allEmployees.Where(e =>
+                e.BirthDate.HasValue &&
+                e.BirthDate.Value.Year.ToString() == BirthYear
+            ).ToList();
+        }
+        // Filter by Marital Status
+        else if (!string.IsNullOrEmpty(MaritalStatus))
+        {
+            persons = allEmployees.Where(e => e.MaritalStatus == MaritalStatus).ToList();
+        }
+        // Filter by Nationality Name
+        else if (!string.IsNullOrEmpty(NationalityName))
         {
             persons = allEmployees.Where(e =>
                 e.nationality_id.HasValue &&
@@ -158,13 +231,22 @@ else
                 nationalityMap[e.nationality_id.Value] == NationalityName
             ).ToList();
         }
+        // Filter by Gender
+        else if (Gender == "hasGender")
+        {
+            persons = allEmployees.Where(e => !string.IsNullOrEmpty(e.Gender)).ToList();
+        }
         else if (Gender == "hasNationality")
         {
             persons = allEmployees.Where(e => e.nationality_id.HasValue).ToList();
         }
-        else if (Gender == "hasGender")
+        else if (Gender == "hasMarital")
         {
-            persons = allEmployees.Where(e => !string.IsNullOrEmpty(e.Gender)).ToList();
+            persons = allEmployees.Where(e => !string.IsNullOrEmpty(e.MaritalStatus)).ToList();
+        }
+        else if (Gender == "hasBirthYear")
+        {
+            persons = allEmployees.Where(e => e.BirthDate.HasValue).ToList();
         }
         else if (Gender == "all" || string.IsNullOrEmpty(Gender))
         {

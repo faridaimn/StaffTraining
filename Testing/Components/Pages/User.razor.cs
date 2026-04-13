@@ -27,9 +27,7 @@ namespace Testing.Components.Pages
         private List<string> filteredBrands = new();
         private List<string> allBrands = new()
     {
-        "Perodua", "Proton", "Toyota", "Mazda", "Honda", "Nissan",
-        "Mitsubishi", "Kia", "BMW", "Mercedes-Benz", "Audi",
-        "Volswagen", "Volvo", "Ford", "Isuzu", "Suzuki", "Hyundai"
+        "Perodua", "Proton", "Toyota", "Mazda", "Honda"
     };
 
         private EmployeeProfile editingEmployee = new();
@@ -62,23 +60,11 @@ namespace Testing.Components.Pages
         //Dictionary car model based on model
         private Dictionary<String, List<string>> brandModels = new()
     {
-        { "Perodua",        new() { "Axia", "Bezza", "Myvi" } },
-        { "Proton",         new() { "Saga", "X50", "X70" } },
-        { "Toyota",         new() { "Vios", "Hilux", "Corolla" } },
-        { "Mazda",          new() { "Mazda 3", "CX-5", "CX-3" } },
-        { "Honda",          new() { "Civic", "CR-V", "Accord" } },
-        { "Nissan",         new() { "Almera", "X-Trail", "Navara" } },
-        { "Mitsubishi",     new() { "Triton", "ASX", "Outlander" } },
-        { "Kia",            new() { "Sportage", "Carnival", "Sorento" } },
-        { "BMW",            new() { "320i", "X5", "X3" } },
-        { "Mercedes-Benz",  new() { "C200", "E250", "GLC" } },
-        { "Audi",           new() { "A4", "Q5", "A6" } },
-        { "Volkswagen",     new() { "Golf", "Tiguan", "Passat" } },
-        { "Volvo",          new() { "XC60", "XC90", "S60" } },
-        { "Ford",           new() { "Ranger", "Everest", "Focus" } },
-        { "Isuzu",          new() { "D-Max", "MU-X", "Trooper" } },
-        { "Suzuki",         new() { "Swift", "Jimny", "Ertiga" } },
-        { "Hyundai",        new() { "Tucson", "Sonata", "Elantra" } },
+        { "Perodua",        new() { "Bezza", "Myvi" } },
+        { "Proton",         new() { "X50", "X70" } },
+        { "Toyota",         new() { "Vios", "Hilux" } },
+        { "Mazda",          new() { "Mazda 3", "CX-5" } },
+        { "Honda",          new() { "Civic", "CR-V" } },
     };
 
         #region table vehicle variable

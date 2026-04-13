@@ -137,7 +137,7 @@
 {
     <div class="d-print-none" id="formSection">
 
-        @if(Source != "personlistpage")
+        @if (Source != "personlistpage")
         {
             <!-- NAVIGATION TAB - letak sini -->
             <ul class="nav nav-tabs mb-3 d-print-none">
@@ -173,151 +173,164 @@
                     <DataAnnotationsValidator />
                     <ValidationSummary class="alert alert-danger shadow-sm p-2" />
 
-    @if (activeTab == "user")
-    {
-                    <div class="card p-3 mb-3 border-0 shadow-sm">
-                       
-                        <h6 class="border-bottom pb-2 mb-3 fw-bold text-secondary">Personal Information</h6>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="fw-bold small text-muted">IC No (Format: YYMMDD-XX-XXXX)</label>
-                                <InputText class="form-control border-primary" @bind-Value="editingEmployee.IC_No" disabled="@(isEditing || isViewing)" maxlength="14" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="fw-bold small text-muted">Person Name (Auto Upper Case)</label>
-                                <InputText class="form-control"
-                                           Value="@editingEmployee.PersonName"
-                                           ValueChanged="@((string val) => editingEmployee.PersonName = val.ToUpperInvariant())"
-                                           ValueExpression="@(() => editingEmployee.PersonName)"
-                                           @oninput="HandleNameInput"
-                                           disabled="@isViewing" />
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-md-12">
-                                <label class="fw-bold small text-muted">Description of Person</label>
-                                <InputTextArea class="form-control" @bind-Value="editingEmployee.DescriptionOfPerson" disabled="@isViewing" maxlength="500" rows="2" />
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-md-6">
-                                <label class="fw-bold small text-muted">Birth Date</label>
-                                <InputDate class="form-control" @bind-Value="@editingEmployee.BirthDate" max="@DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd")" disabled="@isViewing" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="fw-bold small text-muted">Nationality</label>
-                                <InputSelect class="form-select" @bind-Value="@editingEmployee.nationality_id" disabled="@isViewing">
-                                    <option value="">-- Select Nationality --</option>
-
-                                    @foreach (var nat in NationalityList)
-                                    {
-                                        <option value="@nat.Id">@nat.name</option>
-                                    }
-                                </InputSelect>
-                            </div>
-                        </div>
-
-                        <div class="row mb-2">
-                            <div class="col-md-6">
-                                <label class="fw-bold small text-muted">Gender</label>
-                                <InputRadioGroup @bind-Value="editingEmployee.Gender">
-                                    <InputRadio Value="@("Male")" disabled="@isViewing" /> Male
-                                    <InputRadio Value="@("Female")" disabled="@isViewing" /> Female
-                                </InputRadioGroup>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="fw-bold small text-muted">Hobby</label>
-                                <input type="checkbox" disabled="@isViewing"
-                                       checked="@editingEmployee.Hobby.Contains("Reading")"
-                                       @onchange="(ChangeEventArgs e) => ToggleHobby(Reading, e.Value as bool? == true)" />
-                                Reading
-                                <input type="checkbox" disabled="@isViewing"
-                                       checked="@editingEmployee.Hobby.Contains("Hiking")"
-                                       @onchange="(ChangeEventArgs e) => ToggleHobby(Hiking, e.Value as bool? == true)" />
-                                Hiking
-                            </div>
-                        </div>
-
-                        <div class="row mb-2">
-                            <div class="col-md-6">
-                                <label class="fw-bold small text-muted">Today Date</label>
-                                <input class="form-control"
-                                       value="@DateTime.Now.ToString("dd/MM/yyyy")"
-                                       readonly />
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="fw-bold small text-muted">Age</label>
-                                <input class="form-control"
-                                       value="@editingEmployee.CurrentAgeDisplay"
-                                       readonly />
-                            </div>
-                        </div>
-
+                    @if (activeTab == "user")
+                    {
                         <div class="card p-3 mb-3 border-0 shadow-sm">
-                            <h6 class="border-bottom pb-2 mb-3 fw-bold text-secondary">Supporting Document</h6>
+
+                            <h6 class="border-bottom pb-2 mb-3 fw-bold text-secondary">Personal Information</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">IC No (Format: YYMMDD-XX-XXXX)</label>
+                                    <InputText class="form-control border-primary" @bind-Value="editingEmployee.IC_No" disabled="@(isEditing || isViewing)" maxlength="14" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Person Name (Auto Upper Case)</label>
+                                    <InputText class="form-control"
+                                               Value="@editingEmployee.PersonName"
+                                               ValueChanged="@((string val) => editingEmployee.PersonName = val.ToUpperInvariant())"
+                                               ValueExpression="@(() => editingEmployee.PersonName)"
+                                               @oninput="HandleNameInput"
+                                               disabled="@isViewing" />
+                                </div>
+                            </div>
                             <div class="row mb-2">
                                 <div class="col-md-12">
-                                    <label class="fw-bold small text-muted">Upload Document (optional)</label>
-                                    <div class="mt-2">
-                                        <InputFile OnChange="HandleFileSelected"
-                                                   class="form-control"
-                                                   style="padding: 6px 12px;" />
-                                    </div>
-                                    @if (!string.IsNullOrEmpty(editingEmployee.SupportingDocumentPath))
-                                    {
-                                        <div class="mt-2 d-flex align-items-center gap-2">
-                                            <i class="bi bi-paperclip text-muted"></i>
-                                            <a href="@editingEmployee.SupportingDocumentPath" target="_blank" class="text-decoration-none small">
-                                                View current document
-                                            </a>
-                                            @if (!isViewing)
-                                            {
-                                                <span class="text-muted">|</span>
-                                                <span class="text-danger small" style="cursor:pointer; text-decoration:underline;"
-                                                      @onclick="() => editingEmployee.SupportingDocumentPath = null">
-                                                    <i class="bi bi-trash text-danger" style="cursor:pointer;"
-                                                       title="Remove document"
-                                                       @onclick="() => editingEmployee.SupportingDocumentPath = null">
-                                                    </i>
-                                                </span>
-                                            }
+                                    <label class="fw-bold small text-muted">Description of Person</label>
+                                    <InputTextArea class="form-control" @bind-Value="editingEmployee.DescriptionOfPerson" disabled="@isViewing" maxlength="500" rows="2" />
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Birth Date</label>
+                                    <InputDate class="form-control" @bind-Value="@editingEmployee.BirthDate" max="@DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd")" disabled="@isViewing" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Nationality</label>
+                                    <InputSelect class="form-select" @bind-Value="@editingEmployee.nationality_id" disabled="@isViewing">
+                                        <option value="">-- Select Nationality --</option>
+
+                                        @foreach (var nat in NationalityList)
+                                        {
+                                            <option value="@nat.Id">@nat.name</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                            </div>
+
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Gender</label>
+                                    <InputRadioGroup @bind-Value="editingEmployee.Gender">
+                                        <InputRadio Value="@("Male")" disabled="@isViewing" /> Male
+                                        <InputRadio Value="@("Female")" disabled="@isViewing" /> Female
+                                    </InputRadioGroup>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Marital Status</label>
+                                    <InputSelect class="form-select" @bind-Value="editingEmployee.MaritalStatus" disabled="@isViewing">
+                                        <option value="">-- Select Marital Status --</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Married">Married</option>
+                                        <option value="Divorced">Divorced</option>
+                                        <option value="Widowed">Widowed</option>
+                                    </InputSelect>
+                                </div>
+                            </div>
+
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Hobby</label>
+                                    <input type="checkbox" disabled="@isViewing"
+                                           checked="@editingEmployee.Hobby.Contains("Reading")"
+                                           @onchange="(ChangeEventArgs e) => ToggleHobby(Reading, e.Value as bool? == true)" />
+                                    Reading
+                                    <input type="checkbox" disabled="@isViewing"
+                                           checked="@editingEmployee.Hobby.Contains("Hiking")"
+                                           @onchange="(ChangeEventArgs e) => ToggleHobby(Hiking, e.Value as bool? == true)" />
+                                    Hiking
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Today Date</label>
+                                    <input class="form-control"
+                                           value="@DateTime.Now.ToString("dd/MM/yyyy")"
+                                           readonly />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Age</label>
+                                    <input class="form-control"
+                                           value="@editingEmployee.CurrentAgeDisplay"
+                                           readonly />
+                                </div>
+
+                            </div>
+
+
+                            <div class="card p-3 mb-3 border-0 shadow-sm">
+                                <h6 class="border-bottom pb-2 mb-3 fw-bold text-secondary">Supporting Document</h6>
+                                <div class="row mb-2">
+                                    <div class="col-md-12">
+                                        <label class="fw-bold small text-muted">Upload Document (optional)</label>
+                                        <div class="mt-2">
+                                            <InputFile OnChange="HandleFileSelected"
+                                                       class="form-control"
+                                                       style="padding: 6px 12px;" />
                                         </div>
+                                        @if (!string.IsNullOrEmpty(editingEmployee.SupportingDocumentPath))
+                                        {
+                                            <div class="mt-2 d-flex align-items-center gap-2">
+                                                <i class="bi bi-paperclip text-muted"></i>
+                                                <a href="@editingEmployee.SupportingDocumentPath" target="_blank" class="text-decoration-none small">
+                                                    View current document
+                                                </a>
+                                                @if (!isViewing)
+                                                {
+                                                    <span class="text-muted">|</span>
+                                                    <span class="text-danger small" style="cursor:pointer; text-decoration:underline;"
+                                                          @onclick="() => editingEmployee.SupportingDocumentPath = null">
+                                                        <i class="bi bi-trash text-danger" style="cursor:pointer;"
+                                                           title="Remove document"
+                                                           @onclick="() => editingEmployee.SupportingDocumentPath = null">
+                                                        </i>
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="fw-bold small text-muted">Person Potrait (optional)</label>
+                                    <div class="mt-2">
+                                        <InputFile id="portraitFileInput"
+                                                   OnChange="HandlePortraitSelected"
+                                                   class="form-control"
+                                                   accept="image/*"
+                                                   style="display:none;" />
+                                    </div>
+                                    @if (string.IsNullOrEmpty(displayPortrait) || displayPortrait == "/images/placeholder.png")
+                                    {
+                                        <div style="width:120px; height:120px; border-radius:8px; border:2px dashed #adb5bd;
+                                                            display:flex; flex-direction:column; align-items:center; justify-content:center;
+                                                            cursor:pointer; color:#adb5bd; background:#f8f9fa;"
+                                             @onclick="TriggerPortraitUpload">
+                                            <i class="bi bi-person-bounding-box" style="font-size:2rem;"></i>
+                                            <small class="mt-1">Upload Photo</small>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <img src="@displayPortrait"
+                                             alt="Portrait"
+                                             style="width:120px; height:120px; object-fit:cover; border-radius:8px; border:2px dashed #adb5bd; cursor:pointer;"
+                                             @onclick="TriggerPortraitUpload" />
                                     }
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="row mb-2">
-                            <div class="col-md-6">
-                                <label class="fw-bold small text-muted">Person Potrait (optional)</label>
-                                <div class="mt-2">
-                                    <InputFile id="portraitFileInput"
-                                               OnChange="HandlePortraitSelected"
-                                               class="form-control"
-                                               accept="image/*"
-                                               style="display:none;" />
-                                </div>
-                                @if (string.IsNullOrEmpty(displayPortrait) || displayPortrait == "/images/placeholder.png")
-                                {
-                                    <div style="width:120px; height:120px; border-radius:8px; border:2px dashed #adb5bd;
-                                                display:flex; flex-direction:column; align-items:center; justify-content:center;
-                                                cursor:pointer; color:#adb5bd; background:#f8f9fa;"
-                                         @onclick="TriggerPortraitUpload">
-                                        <i class="bi bi-person-bounding-box" style="font-size:2rem;"></i>
-                                        <small class="mt-1">Upload Photo</small>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <img src="@displayPortrait"
-                                         alt="Portrait"
-                                         style="width:120px; height:120px; object-fit:cover; border-radius:8px; border:2px dashed #adb5bd; cursor:pointer;"
-                                         @onclick="TriggerPortraitUpload" />
-                                }
-                            </div>
-                        </div>
                         </div>
                     }
                     else if (activeTab == "vehicle")

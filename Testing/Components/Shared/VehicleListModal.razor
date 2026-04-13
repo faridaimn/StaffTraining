@@ -1,0 +1,73 @@
+﻿@using Testing.Components.Model
+
+@if (IsVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1"
+         style="background:rgba(0,0,0,0.5); display:flex !important; align-items:center; justify-content:center;">
+        <div class="modal-dialog modal-lg" style="width:60%; max-width:800px; min-width:500px;">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #334155);">
+                    <h5 class="modal-title text-white">
+                        <i class="bi bi-truck"></i> @Title
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if (Vehicles.Any())
+                    {
+                        <div class="mb-3">
+                            <span class="badge bg-secondary">Total: @Vehicles.Count vehicles</span>
+                        </div>
+                        <table class="table table-bordered table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Vehicle No</th>
+                                    <th>Color</th>
+                                    <th>Brand</th>
+                                    <th>Model</th>
+                                    <th>Owner</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var v in Vehicles)
+                                {
+                                    <tr>
+                                        <td>@v.VehicleNo</td
+                                        <td>@v.Color</td
+                                        <td>@v.brand</td
+                                        <td>@v.Model</td
+                                        <td>
+                                           <a href="/users?ic=@v.IC_No&tab=vehicle" 
+                                               class="text-decoration-none"
+                                               target="_blank"
+                                               title="Click to view user details">
+                                                <i class="bi bi-person-badge"></i> @v.IC_No
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No vehicles found for @FilterValue.</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="Close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string FilterValue { get; set; } = "";
+    [Parameter] public List<Vehicle> Vehicles { get; set; } = new();
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task Close() => await OnClose.InvokeAsync();
+}

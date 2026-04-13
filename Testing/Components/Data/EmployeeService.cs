@@ -53,8 +53,9 @@ public class EmployeeService
                     Gender = employeeReader["Gender"]?.ToString() ?? "",
                     Hobby = employeeReader["Hobby"]?.ToString()?.Split('.').ToList() ?? new List<string>(),
                     SupportingDocumentPath = employeeReader["SupportingDocumentPath"]?.ToString(),
-                    PersonPortraitPath = employeeReader["PersonPortraitPath"]?.ToString()
-                 };
+                    PersonPortraitPath = employeeReader["PersonPortraitPath"]?.ToString(),
+                    MaritalStatus = employeeReader["MaritalStatus"]?.ToString()
+                };
                 employees.Add(emp);
             }
 
