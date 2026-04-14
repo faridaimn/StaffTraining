@@ -42,9 +42,9 @@ h1:focus {
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
@@ -63,4 +63,114 @@ h1:focus {
 
 .form-content-wrapper {
     padding-bottom: 80px;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    /* sembunyikan blazor layout elements */
+    .sidebar,
+    .nav-scrollable,
+    .top-row,
+    .navbar,
+    nav,
+    header {
+        display: none !important;
+    }
+
+    #printSection, #printSection * {
+        visibility: visible;
+    }
+
+    #printSection {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        visibility: visible !important;
+    }
+}
+
+.form-section-title {
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    font-weight: bold;
+    color: #495057;
+}
+
+.form-label-custom {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.hobby-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 20px;
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.hobby-checkbox:hover {
+    background: #f0f4ff;
+    border-color: #86b7fe;
+}
+
+.portrait-upload-box {
+    width: 130px;
+    height: 130px;
+    border-radius: 10px;
+    border: 2px dashed #adb5bd;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #adb5bd;
+    background: #f8f9fa;
+    transition: all 0.2s;
+}
+
+.portrait-upload-box:hover {
+    border-color: #86b7fe;
+    color: #0d6efd;
+    background: #f0f4ff;
+}
+
+.portrait-img {
+    width: 130px;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.portrait-img:hover {
+    border-color: #86b7fe;
+    box-shadow: 0 0 8px rgba(13,110,253,.25);
+}
+
+th.sortable {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+th.sortable:hover {
+    background-color: #495057 !important;
+}
+
+th.sortable .sort-icon {
+    font-size: 0.8rem;
+    margin-left: 5px;
 }

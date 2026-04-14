@@ -71,6 +71,53 @@ public class EmployeeService
     }
     #endregion
 
+    #region GetAllEmployeesAsync (without filter)
+
+    public async Task<List<EmployeeProfile>> GetAllEmployeesAsync()
+    {
+        var employees = new List<EmployeeProfile>();
+
+        try
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var query = @"SELECT * FROM EmployeeProfiles";
+
+            using var employeeCommand = new SqlCommand(query, connection);
+            using var employeeReader = await employeeCommand.ExecuteReaderAsync();
+
+            while (await employeeReader.ReadAsync())
+            {
+                var emp = new EmployeeProfile
+                {
+                    IC_No = employeeReader["IC_No"]?.ToString() ?? "",
+                    PersonName = employeeReader["PersonName"]?.ToString() ?? "",
+                    DescriptionOfPerson = employeeReader["DescriptionOfPerson"]?.ToString(),
+                    BirthDate = employeeReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(employeeReader["BirthDate"]) : null,
+                    nationality_id = employeeReader["nationality_id"] != DBNull.Value ? Convert.ToInt32(employeeReader["nationality_id"]) : null,
+                    Gender = employeeReader["Gender"]?.ToString() ?? "",
+                    Hobby = employeeReader["Hobby"]?.ToString()?.Split('.').ToList() ?? new List<string>(),
+                    SupportingDocumentPath = employeeReader["SupportingDocumentPath"]?.ToString(),
+                    PersonPortraitPath = employeeReader["PersonPortraitPath"]?.ToString(),
+                    MaritalStatus = employeeReader["MaritalStatus"]?.ToString()
+                };
+                employees.Add(emp);
+            }
+
+            await employeeReader.CloseAsync();
+            await LoadVehiclesForEmployees(employees, connection);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+
+        return employees;
+    }
+
+    #endregion
+
     #region LoadVehiclesForEmployees
 
     private async Task LoadVehiclesForEmployees(List<EmployeeProfile> employees, SqlConnection connection)
@@ -279,6 +326,67 @@ public class EmployeeService
 
     #endregion
 
+    #region UpdateVehicleAsync
+    public async Task UpdateVehicleAsync(Vehicle vehicle)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var query = @"
+            UPDATE vehicles SET
+            vehicle_no = @VehicleNo,
+            color = @Color,
+            brand = @brand,
+            model = @Model,
+            IC_No = @IC_No
+            WHERE id = @Id";
+
+        using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@VehicleNo", vehicle.VehicleNo);
+        command.Parameters.AddWithValue("@Color", vehicle.Color);
+        command.Parameters.AddWithValue("@brand", vehicle.brand);
+        command.Parameters.AddWithValue("@Model", vehicle.Model);
+        command.Parameters.AddWithValue("@IC_No", vehicle.IC_No);
+        command.Parameters.AddWithValue("@Id", vehicle.Id);
+        await command.ExecuteNonQueryAsync();
+    }
+    #endregion
+
+    #region AddVehiclesAsync
+    public async Task AddVehiclesAsync(List<Vehicle> vehicles)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        using var transaction = await connection.BeginTransactionAsync();
+
+        try
+        {
+            foreach (var vehicle in vehicles)
+            {
+                var query = @"
+                    INSERT INTO vehicles(vehicle_no, color, brand, model, IC_No)
+                    VALUES (@VehicleNo, @Color, @brand, @Model, @IC_No)";
+
+                using var command = new SqlCommand(query, connection, (SqlTransaction)transaction);
+                command.Parameters.AddWithValue("@VehicleNo", vehicle.VehicleNo);
+                command.Parameters.AddWithValue("@Color", vehicle.Color);
+                command.Parameters.AddWithValue("@brand", vehicle.brand);
+                command.Parameters.AddWithValue("@Model", vehicle.Model);
+                command.Parameters.AddWithValue("@IC_No", vehicle.IC_No);
+                await command.ExecuteNonQueryAsync();
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+    #endregion
+
     #region DeleteVehicleAsync
     public async Task DeleteVehicleAsync(int vehicleId)
     {
@@ -292,6 +400,28 @@ public class EmployeeService
         await command.ExecuteNonQueryAsync();
     }
     #endregion
+
+    public async Task<bool> IsVehicleNoExistsAsync(string vehicleNo, int? excludeVehicleId = null)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var query = "SELECT COUNT(1) FROM vehicles WHERE vehicle_no = @VehicleNo";
+        if (excludeVehicleId.HasValue)
+        {
+            query += " AND id <> @ExcludeId";
+        }
+
+        using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@VehicleNo", vehicleNo);
+        if (excludeVehicleId.HasValue)
+        {
+            command.Parameters.AddWithValue("@ExcludeId", excludeVehicleId.Value);
+        }
+
+        var count = Convert.ToInt32(await command.ExecuteScalarAsync());
+        return count > 0;
+    }
 
     private void AddEmployeeParameters(SqlCommand command, EmployeeProfile employee)
     {

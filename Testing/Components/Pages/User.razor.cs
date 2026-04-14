@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
@@ -54,6 +54,7 @@ namespace Testing.Components.Pages
         // Search filters
         private string searchName = "";
         private string searchIC = "";
+        private string? vehicleNoDuplicateError;
         private string? ErrorMessage = null;
         private string? portraitPreviewUrl;
 
@@ -66,6 +67,65 @@ namespace Testing.Components.Pages
         { "Mazda",          new() { "Mazda 3", "CX-5" } },
         { "Honda",          new() { "Civic", "CR-V" } },
     };
+
+        #region employee pagination and sorting
+        private string empSortColumn = "PersonName";
+        private bool empSortAscending = true;
+        private int empCurrentPage = 1;
+        private int empPageSize = 5;
+
+        private int empTotalFilteredCount => EmployeesList?.Count ?? 0;
+        private int empTotalPages => (int)Math.Ceiling((double)empTotalFilteredCount / empPageSize);
+
+        private List<EmployeeProfile> pagedEmployees
+        {
+            get
+            {
+                if (EmployeesList == null) return new List<EmployeeProfile>();
+
+                var sorted = empSortColumn switch
+                {
+                    "IC_No" => empSortAscending
+                        ? EmployeesList.OrderBy(e => e.IC_No).ToList()
+                        : EmployeesList.OrderByDescending(e => e.IC_No).ToList(),
+                    "PersonName" => empSortAscending
+                        ? EmployeesList.OrderBy(e => e.PersonName).ToList()
+                        : EmployeesList.OrderByDescending(e => e.PersonName).ToList(),
+                    "Description" => empSortAscending
+                        ? EmployeesList.OrderBy(e => e.DescriptionOfPerson).ToList()
+                        : EmployeesList.OrderByDescending(e => e.DescriptionOfPerson).ToList(),
+                    _ => EmployeesList
+                };
+
+                return sorted
+                    .Skip((empCurrentPage - 1) * empPageSize)
+                    .Take(empPageSize)
+                    .ToList();
+            }
+        }
+
+        private void SortEmpBy(string column)
+        {
+            if (empSortColumn == column)
+            {
+                empSortAscending = !empSortAscending;
+            }
+            else
+            {
+                empSortColumn = column;
+                empSortAscending = true;
+            }
+        }
+
+        private void ChangePageSize(ChangeEventArgs e)
+        {
+            if (int.TryParse(e.Value?.ToString(), out int newSize))
+            {
+                empPageSize = newSize;
+                empCurrentPage = 1;
+            }
+        }
+        #endregion
 
         #region table vehicle variable
 
@@ -173,6 +233,7 @@ namespace Testing.Components.Pages
         private async Task LoadData()
         {
             EmployeesList = await DbService.GetEmployeesAsync(searchName, searchIC);
+            empCurrentPage = 1; // Reset to first page when data is loaded/searched
         }
 
         private async Task LoadNationalities()
@@ -486,6 +547,8 @@ namespace Testing.Components.Pages
         {
             var input = e.Value?.ToString() ?? "";
             editingVehicle.brand = input;
+            editingVehicle.Model = ""; // Reset model
+            filteredModels.Clear();
 
             filteredBrands = string.IsNullOrEmpty(input)
                 ? allBrands.ToList()
@@ -506,6 +569,8 @@ namespace Testing.Components.Pages
         private void selectBrand(String brand)
         {
             editingVehicle.brand = brand;
+            editingVehicle.Model = ""; // Reset model
+            filteredModels.Clear();
             filteredBrands.Clear();
         }
 
@@ -549,14 +614,20 @@ namespace Testing.Components.Pages
 
         #region ADD/REMOVE Vehicle
 
-        private void AddVehicle()
+        private async Task AddVehicle()
         {
             if (string.IsNullOrEmpty(editingVehicle.VehicleNo) ||
             string.IsNullOrEmpty(editingVehicle.Color) ||
             string.IsNullOrEmpty(editingVehicle.brand) ||
             string.IsNullOrEmpty(editingVehicle.Model))
             {
-                JSRuntime.InvokeVoidAsync("alert", "Please fill in all vehicle field.");
+                await JSRuntime.InvokeVoidAsync("alert", "Please fill in all vehicle fields.");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(vehicleNoDuplicateError))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Cannot add vehicle: {vehicleNoDuplicateError}");
                 return;
             }
 
@@ -585,6 +656,7 @@ namespace Testing.Components.Pages
                 });
             }
             editingVehicle = new Vehicle();
+            vehicleNoDuplicateError = null;
         }
 
         private async Task RemoveVehicle(Vehicle v)
@@ -610,6 +682,37 @@ namespace Testing.Components.Pages
             editingVehicle.Model = v.Model;
 
             onUpdate = true;
+            vehicleNoDuplicateError = null;
+        }
+
+        private async Task ValidateVehicleNo(ChangeEventArgs e)
+        {
+            var val = e.Value?.ToString()?.Trim() ?? "";
+            editingVehicle.VehicleNo = val;
+            vehicleNoDuplicateError = null;
+
+            if (string.IsNullOrWhiteSpace(val)) return;
+
+            // Check local list first
+            if (vehicleList.Any(v => v.VehicleNo.Equals(val, StringComparison.OrdinalIgnoreCase) && v.VehicleNo != selectedVehicleNo))
+            {
+                vehicleNoDuplicateError = "This vehicle number is already in your list.";
+                return;
+            }
+
+            // Check database
+            int? excludeId = null;
+            if (onUpdate && selectedVehicleNo != null)
+            {
+                excludeId = vehicleList.FirstOrDefault(v => v.VehicleNo == selectedVehicleNo)?.Id;
+                if (excludeId == 0) excludeId = null;
+            }
+
+            bool exists = await DbService.IsVehicleNoExistsAsync(val, excludeId);
+            if (exists)
+            {
+                vehicleNoDuplicateError = "This vehicle number is already registered in the system.";
+            }
         }
 
         #endregion
@@ -635,30 +738,93 @@ namespace Testing.Components.Pages
 
         private void OnVehicleSearchInput(ChangeEventArgs e)
         {
-            filterVehicleNo = e.Value?.ToString();
+            filterVehicleNo = e.Value?.ToString() ?? "";
             currentPage = 1;
         }
 
         private void OnColorSearchInput(ChangeEventArgs e)
         {
-            filterColor = e.Value?.ToString();
+            filterColor = e.Value?.ToString() ?? "";
             currentPage = 1;
         }
 
         private void OnBrandSearchInput(ChangeEventArgs e)
         {
-            filterBrand = e.Value?.ToString();
+            filterBrand = e.Value?.ToString() ?? "";
             currentPage = 1;
         }
 
+
+
         private void OnModelSearchInput(ChangeEventArgs e)
         {
-            filterModel = e.Value?.ToString();
+            filterModel = e.Value?.ToString() ?? "";
             currentPage = 1;
         }
 
         #endregion
 
-        
+        #region HandleIcInput
+        private void HandleIcInput(ChangeEventArgs e)
+        {
+            var val = e.Value?.ToString();
+            if (val != null)
+            {
+                HandleIcInput(val);
+            }
+        }
+
+        private void HandleIcInput(string val)
+        {
+            editingEmployee.IC_No = val;
+
+            if (!string.IsNullOrEmpty(val))
+            {
+                var cleanIc = val.Replace("-", "").Trim();
+                if (cleanIc.Length >= 6)
+                {
+                    var dobString = cleanIc.Substring(0, 6);
+                    if (DateTime.TryParseExact(dobString, "yyMMdd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
+                    {
+                        if (parsedDate > DateTime.Today)
+                        {
+                            parsedDate = parsedDate.AddYears(-100);
+                        }
+                        editingEmployee.BirthDate = parsedDate;
+                    }
+                }
+            }
+        }
+        #endregion
+
+        private bool scrolledToDocs = false;
+
+        private async Task HandleNextStep()
+        {
+            if (!scrolledToDocs)
+            {
+                await ScrollToElement("documentSection");
+                scrolledToDocs = true;
+            }
+            else
+            {
+                await GoToVehicleTab();
+                scrolledToDocs = false;
+                vehicleNoDuplicateError = null;
+            }
+        }
+
+        private async Task ScrollToElement(string elementId)
+        {
+            await JSRuntime.InvokeVoidAsync("scrollToElement", elementId);
+        }
+
+        private async Task GoToVehicleTab()
+        {
+            SetActiveTab("vehicle");
+            // Wait for Blazor to render the new tab
+            await Task.Delay(100);
+            await JSRuntime.InvokeVoidAsync("scrollToElement", "vehicleSection");
+        }
     }
 }

@@ -7,6 +7,8 @@ namespace Testing.Components.Model
         public int Id { get; set; }
 
         [Required]
+        [StringLength(14, MinimumLength = 12, ErrorMessage = "IC No must be between 12-14 characters.")]
+        [RegularExpression(@"^\d{6}-\d{2}-\d{4}$", ErrorMessage = "Format: YYMMDD-XX-XXXX")]
         public string IC_No { get; set; } = string.Empty;
 
         [Required]

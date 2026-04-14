@@ -1,4 +1,4 @@
-﻿@page "/users"
+@page "/users"
 @using Testing.Components.Model
 @using Testing.Components.Data
 @using Microsoft.AspNetCore.Components.Forms
@@ -8,34 +8,6 @@
 @inject IWebHostEnvironment Env
 @rendermode InteractiveServer
 
-<style>
-    @@media print {
-        body * {
-            visibility: hidden;
-        }
-        /* sembunyikan blazor layout elements */
-        .sidebar,
-        .nav-scrollable,
-        .top-row,
-        .navbar,
-        nav,
-        header {
-            display: none !important;
-        }
-
-        #printSection, #printSection * {
-            visibility: visible;
-        }
-
-        #printSection {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            visibility: visible !important;
-        }
-    }
-</style>
 
 <PageTitle>Employee Profiles</PageTitle>
 
@@ -44,7 +16,7 @@
 {
     <div class="d-print-none" id="searchAndListSection">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Employee Profiles Management</h1>
+            <h1><i class="bi bi-people-fill me-2"></i>Employee Profiles</h1>
             <div class="d-flex gap-2">
                 <button class="btn btn-primary btn-lg shadow" @onclick="PrintRecordList">
                     <i class="bi bi-printer"></i> Print Record List
@@ -62,21 +34,27 @@
 
         <!-- Search & List Section -->
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-dark text-white">Search & List Records</div>
+            <div class="card-header bg-dark text-white">
+                <i class="bi bi-search me-1"></i> Search & List Records
+            </div>
             <div class="card-body bg-light">
 
                 <div class="row mb-4 align-items-end p-3 bg-white border rounded shadow-sm">
                     <div class="col-md-4">
-                        <label class="fw-bold text-muted small">Dynamic Search (Name)</label>
+                        <label class="form-label-custom">Dynamic Search (Name)</label>
                         <input type="text" class="form-control border-primary" @bind="searchName" @bind:event="oninput" @onkeyup="SearchDynamic" placeholder="Type to search..." />
                     </div>
                     <div class="col-md-4">
-                        <label class="fw-bold text-muted small">Single Search (IC No)</label>
+                        <label class="form-label-custom">Single Search (IC No)</label>
                         <input type="text" class="form-control" @bind="searchIC" placeholder="Exact IC No..." />
                     </div>
-                    <div class="col-md-4">
-                        <button class="btn btn-primary px-4 shadow-sm" @onclick="LoadData">Search</button>
-                        <button class="btn btn-outline-secondary ms-2 shadow-sm" @onclick="ClearSearch">Clear</button>
+                    <div class="col-md-4 d-flex gap-2 align-items-end">
+                        <button class="btn btn-primary px-4 shadow-sm" @onclick="LoadData">
+                            <i class="bi bi-search me-1"></i>Search
+                        </button>
+                        <button class="btn btn-outline-secondary shadow-sm" @onclick="ClearSearch">
+                            <i class="bi bi-x-circle me-1"></i>Clear
+                        </button>
                     </div>
                 </div>
 
@@ -101,28 +79,96 @@
                         <table class="table table-hover table-striped mb-0 align-middle table-bordered bg-white">
                             <thead class="table-dark text-center">
                                 <tr>
-                                    <th>IC No</th>
-                                    <th>Name</th>
-                                    <th>Description</th>
+                                    <th class="sortable" @onclick='() => SortEmpBy("IC_No")'>
+                                        IC No
+                                        @if (empSortColumn == "IC_No")
+                                        {
+                                            <i class="bi @(empSortAscending ? "bi-sort-numeric-down" : "bi-sort-numeric-down-alt") sort-icon"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size: 0.7rem;"></i>
+                                        }
+                                    </th>
+                                    <th class="sortable" @onclick='() => SortEmpBy("PersonName")'>
+                                        Name
+                                        @if (empSortColumn == "PersonName")
+                                        {
+                                            <i class="bi @(empSortAscending ? "bi-sort-alpha-down" : "bi-sort-alpha-down-alt") sort-icon"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size: 0.7rem;"></i>
+                                        }
+                                    </th>
+                                    <th class="sortable" @onclick='() => SortEmpBy("Description")'>
+                                        Description
+                                        @if (empSortColumn == "Description")
+                                        {
+                                            <i class="bi @(empSortAscending ? "bi-sort-alpha-down" : "bi-sort-alpha-down-alt") sort-icon"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size: 0.7rem;"></i>
+                                        }
+                                    </th>
                                     <th style="min-width: 220px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var emp in EmployeesList)
+                                @foreach (var emp in pagedEmployees)
                                 {
                                     <tr>
                                         <td class="text-center fw-bold">@emp.IC_No</td>
                                         <td class="text-truncate" style="max-width: 150px;" title="@emp.PersonName">@emp.PersonName</td>
                                         <td class="text-truncate" style="max-width: 150px;" title="@emp.DescriptionOfPerson">@emp.DescriptionOfPerson</td>
                                         <td class="text-center">
-                                            <button class="btn btn-sm btn-info text-white shadow-sm" @onclick="() => ViewRecord(emp.IC_No)">Details</button>
-                                            <button class="btn btn-sm btn-warning text-dark mx-1 shadow-sm" @onclick="() => EditRecord(emp.IC_No)">Edit</button>
-                                            <button class="btn btn-sm btn-danger shadow-sm" @onclick="() => DeleteRecord(emp.IC_No)">Delete</button>
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <button class="btn btn-sm btn-info text-white shadow-sm" @onclick="() => ViewRecord(emp.IC_No)">Details</button>
+                                                <button class="btn btn-sm btn-warning text-dark shadow-sm" @onclick="() => EditRecord(emp.IC_No)">Edit</button>
+                                                <button class="btn btn-sm btn-danger shadow-sm" @onclick="() => DeleteRecord(emp.IC_No)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Pagination for Employees -->
+                    <div class="d-flex justify-content-between align-items-center mt-3 bg-white p-2 rounded shadow-sm border">
+                        <div class="d-flex align-items-center gap-2 text-muted small">
+                            <span>Show</span>
+                            <select class="form-select form-select-sm" style="width: auto;" @onchange="ChangePageSize">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span>entries</span>
+                            <span class="ms-2">
+                                Showing @(empTotalFilteredCount == 0 ? 0 : (empCurrentPage - 1) * empPageSize + 1) to 
+                                @(Math.Min(empCurrentPage * empPageSize, empTotalFilteredCount)) of @empTotalFilteredCount entries
+                            </span>
+                        </div>
+                        <nav aria-label="Employee list pagination">
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item @(empCurrentPage == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => { empCurrentPage--; StateHasChanged(); }">Previous</button>
+                                </li>
+                                @for (int i = 1; i <= empTotalPages; i++)
+                                {
+                                    var pageIndex = i;
+                                    <li class="page-item @(empCurrentPage == pageIndex ? "active" : "")">
+                                        <button class="page-link" @onclick="() => { empCurrentPage = pageIndex; StateHasChanged(); }">@pageIndex</button>
+                                    </li>
+                                }
+                                <li class="page-item @(empCurrentPage == empTotalPages || empTotalPages == 0 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => { empCurrentPage++; StateHasChanged(); }">Next</button>
+                                </li>
+                            </ul>
+                        </nav>
                     </div>
                 }
             </div>
@@ -139,20 +185,20 @@
 
         @if (Source != "personlistpage")
         {
-            <!-- NAVIGATION TAB - letak sini -->
+            <!-- NAVIGATION TAB -->
             <ul class="nav nav-tabs mb-3 d-print-none">
                 <li class="nav-item">
                     <button type="button"
                             class="nav-link @(activeTab == "user" ? "active" : "")"
                             @onclick="@(() => SetActiveTab("user"))">
-                        👤 Employee Details
+                        <i class="bi bi-person-badge me-2"></i>Employee Details
                     </button>
                 </li>
                 <li class="nav-item">
                     <button type="button"
                             class="nav-link @(activeTab == "vehicle" ? "active" : "")"
                             @onclick="@(() => SetActiveTab("vehicle"))">
-                        🚗 Vehicle Information
+                        <i class="bi bi-car-front-fill me-2"></i>Vehicle Information
                     </button>
                 </li>
             </ul>
@@ -161,6 +207,7 @@
         <div class="card shadow-lg border-0">
             <div class="card-header @(isViewing ? "bg-info text-white" : (isEditing ? "bg-warning" : "bg-primary text-white")) d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold">
+                    <i class="bi @(isEditing ? "bi-pencil-square" : (isViewing ? "bi-eye" : "bi-plus-circle")) me-2"></i>
                     @(isEditing ? "Edit Employee Record" : (isViewing ? "Employee Details" : "Create New Employee"))
                 </h5>
                 <button type="button" class="btn btn-sm btn-light shadow-sm fw-bold" @onclick="ResetForm">
@@ -175,16 +222,34 @@
 
                     @if (activeTab == "user")
                     {
-                        <div class="card p-3 mb-3 border-0 shadow-sm">
+                        <!-- PERSONAL INFORMATION SECTION -->
+                        <div id="personalInfoSection" class="card p-4 mb-3 border-0 shadow-sm">
+                            <div class="form-section-title d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 border-0 p-0 m-0 fw-bold" style="color: inherit;">
+                                    <i class="bi bi-person-vcard me-2"></i>Personal Information
+                                </h6>
+                                <div class="d-flex align-items-center gap-2">
+                                    <label class="form-label-custom mb-0 text-muted small text-nowrap">Today Date:</label>
+                                    <input class="form-control bg-light text-center py-1"
+                                           style="max-width: 200px; font-size: 0.85rem;"
+                                           value="@DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")"
+                                           readonly />
+                                </div>
+                            </div>
 
-                            <h6 class="border-bottom pb-2 mb-3 fw-bold text-secondary">Personal Information</h6>
+                            <!-- Row 2: IC No + Name -->
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">IC No (Format: YYMMDD-XX-XXXX)</label>
-                                    <InputText class="form-control border-primary" @bind-Value="editingEmployee.IC_No" disabled="@(isEditing || isViewing)" maxlength="14" />
+                                    <label class="form-label-custom">IC No (Format: YYMMDD-XX-XXXX)</label>
+                                    <InputText class="form-control border-primary"
+                                               Value="@editingEmployee.IC_No"
+                                               ValueChanged="@((string val) => HandleIcInput(val))"
+                                               ValueExpression="@(() => editingEmployee.IC_No)"
+                                               @oninput="HandleIcInput"
+                                               disabled="@(isEditing || isViewing)" maxlength="14" />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">Person Name (Auto Upper Case)</label>
+                                    <label class="form-label-custom">Person Name (Auto Upper Case)</label>
                                     <InputText class="form-control"
                                                Value="@editingEmployee.PersonName"
                                                ValueChanged="@((string val) => editingEmployee.PersonName = val.ToUpperInvariant())"
@@ -193,41 +258,35 @@
                                                disabled="@isViewing" />
                                 </div>
                             </div>
-                            <div class="row mb-2">
-                                <div class="col-md-12">
-                                    <label class="fw-bold small text-muted">Description of Person</label>
-                                    <InputTextArea class="form-control" @bind-Value="editingEmployee.DescriptionOfPerson" disabled="@isViewing" maxlength="500" rows="2" />
-                                </div>
-                            </div>
-                            <div class="row mb-2">
+
+                            <!-- Row 3: Birth Date + Age -->
+                            <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">Birth Date</label>
+                                    <label class="form-label-custom">Birth Date</label>
                                     <InputDate class="form-control" @bind-Value="@editingEmployee.BirthDate" max="@DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd")" disabled="@isViewing" />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">Nationality</label>
+                                    <label class="form-label-custom">Age</label>
+                                    <input class="form-control bg-light"
+                                           value="@editingEmployee.CurrentAgeDisplay"
+                                           readonly />
+                                </div>
+                            </div>
+
+                            <!-- Row 4: Nationality + Marital Status -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label-custom">Nationality</label>
                                     <InputSelect class="form-select" @bind-Value="@editingEmployee.nationality_id" disabled="@isViewing">
                                         <option value="">-- Select Nationality --</option>
-
                                         @foreach (var nat in NationalityList)
                                         {
                                             <option value="@nat.Id">@nat.name</option>
                                         }
                                     </InputSelect>
                                 </div>
-                            </div>
-
-                            <div class="row mb-2">
                                 <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">Gender</label>
-                                    <InputRadioGroup @bind-Value="editingEmployee.Gender">
-                                        <InputRadio Value="@("Male")" disabled="@isViewing" /> Male
-                                        <InputRadio Value="@("Female")" disabled="@isViewing" /> Female
-                                    </InputRadioGroup>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">Marital Status</label>
+                                    <label class="form-label-custom">Marital Status</label>
                                     <InputSelect class="form-select" @bind-Value="editingEmployee.MaritalStatus" disabled="@isViewing">
                                         <option value="">-- Select Marital Status --</option>
                                         <option value="Single">Single</option>
@@ -238,118 +297,139 @@
                                 </div>
                             </div>
 
-                            <div class="row mb-2">
+                            <!-- Row 5: Gender + Hobby -->
+                            <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">Hobby</label>
-                                    <input type="checkbox" disabled="@isViewing"
-                                           checked="@editingEmployee.Hobby.Contains("Reading")"
-                                           @onchange="(ChangeEventArgs e) => ToggleHobby(Reading, e.Value as bool? == true)" />
-                                    Reading
-                                    <input type="checkbox" disabled="@isViewing"
-                                           checked="@editingEmployee.Hobby.Contains("Hiking")"
-                                           @onchange="(ChangeEventArgs e) => ToggleHobby(Hiking, e.Value as bool? == true)" />
-                                    Hiking
+                                    <label class="form-label-custom">Gender</label>
+                                    <div class="form-control bg-white d-flex align-items-center gap-3" style="height: auto; padding: 8px 12px;">
+                                        <InputRadioGroup @bind-Value="editingEmployee.Gender">
+                                            <label class="d-inline-flex align-items-center gap-1 mb-0" style="cursor:pointer;">
+                                                <InputRadio Value="@("Male")" disabled="@isViewing" /> Male
+                                            </label>
+                                            <label class="d-inline-flex align-items-center gap-1 mb-0" style="cursor:pointer;">
+                                                <InputRadio Value="@("Female")" disabled="@isViewing" /> Female
+                                            </label>
+                                        </InputRadioGroup>
+                                    </div>
                                 </div>
-
                                 <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">Today Date</label>
-                                    <input class="form-control"
-                                           value="@DateTime.Now.ToString("dd/MM/yyyy")"
-                                           readonly />
+                                    <label class="form-label-custom">Hobby</label>
+                                    <div class="form-control bg-white d-flex align-items-center gap-3" style="height: auto; padding: 8px 12px;">
+                                        <label class="d-inline-flex align-items-center gap-1 mb-0" style="cursor:pointer;">
+                                            <input type="checkbox" disabled="@isViewing"
+                                                   checked="@editingEmployee.Hobby.Contains("Reading")"
+                                                   @onchange="(ChangeEventArgs e) => ToggleHobby(Reading, e.Value as bool? == true)" />
+                                            Reading
+                                        </label>
+                                        <label class="d-inline-flex align-items-center gap-1 mb-0" style="cursor:pointer;">
+                                            <input type="checkbox" disabled="@isViewing"
+                                                   checked="@editingEmployee.Hobby.Contains("Hiking")"
+                                                   @onchange="(ChangeEventArgs e) => ToggleHobby(Hiking, e.Value as bool? == true)" />
+                                            Hiking
+                                        </label>
+                                    </div>
                                 </div>
-
-                                <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">Age</label>
-                                    <input class="form-control"
-                                           value="@editingEmployee.CurrentAgeDisplay"
-                                           readonly />
-                                </div>
-
                             </div>
 
+                            <!-- Row 6: Description (Bottom) -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label-custom">Description of Person</label>
+                                    <InputTextArea class="form-control" @bind-Value="editingEmployee.DescriptionOfPerson" disabled="@isViewing" maxlength="500" rows="2" />
+                                </div>
+                            </div>
+                        </div>
 
-                            <div class="card p-3 mb-3 border-0 shadow-sm">
-                                <h6 class="border-bottom pb-2 mb-3 fw-bold text-secondary">Supporting Document</h6>
-                                <div class="row mb-2">
-                                    <div class="col-md-12">
-                                        <label class="fw-bold small text-muted">Upload Document (optional)</label>
-                                        <div class="mt-2">
-                                            <InputFile OnChange="HandleFileSelected"
-                                                       class="form-control"
-                                                       style="padding: 6px 12px;" />
+                        <!-- SUPPORTING DOCUMENT & PORTRAIT SECTION -->
+                        <div id="documentSection" class="card p-4 mb-3 border-0 shadow-sm">
+                            <h6 class="form-section-title">
+                                <i class="bi bi-paperclip me-2"></i>Documents & Portrait
+                            </h6>
+                            <div class="row">
+                                <!-- Supporting Document -->
+                                <div class="col-md-8">
+                                    <label class="form-label-custom">Upload Supporting Document (optional)</label>
+                                    <InputFile OnChange="HandleFileSelected"
+                                               class="form-control"
+                                               style="padding: 6px 12px;" />
+                                    @if (!string.IsNullOrEmpty(editingEmployee.SupportingDocumentPath))
+                                    {
+                                        <div class="mt-2 d-flex align-items-center gap-2">
+                                            <i class="bi bi-file-earmark-check text-success"></i>
+                                            <a href="@editingEmployee.SupportingDocumentPath" target="_blank" class="text-decoration-none small">
+                                                View current document
+                                            </a>
+                                            @if (!isViewing)
+                                            {
+                                                <span class="text-muted">|</span>
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        @onclick="() => editingEmployee.SupportingDocumentPath = null">
+                                                    <i class="bi bi-trash"></i> Remove
+                                                </button>
+                                            }
                                         </div>
-                                        @if (!string.IsNullOrEmpty(editingEmployee.SupportingDocumentPath))
+                                    }
+                                </div>
+
+                                <!-- Person Portrait -->
+                                <div class="col-md-4 text-center">
+                                    <label class="form-label-custom d-block">Person Portrait (optional)</label>
+                                    <InputFile id="portraitFileInput"
+                                               OnChange="HandlePortraitSelected"
+                                               class="form-control"
+                                               accept="image/*"
+                                               style="display:none;" />
+                                    <div class="mt-1 d-inline-block">
+                                        @if (string.IsNullOrEmpty(displayPortrait) || displayPortrait == "/images/placeholder.png")
                                         {
-                                            <div class="mt-2 d-flex align-items-center gap-2">
-                                                <i class="bi bi-paperclip text-muted"></i>
-                                                <a href="@editingEmployee.SupportingDocumentPath" target="_blank" class="text-decoration-none small">
-                                                    View current document
-                                                </a>
-                                                @if (!isViewing)
-                                                {
-                                                    <span class="text-muted">|</span>
-                                                    <span class="text-danger small" style="cursor:pointer; text-decoration:underline;"
-                                                          @onclick="() => editingEmployee.SupportingDocumentPath = null">
-                                                        <i class="bi bi-trash text-danger" style="cursor:pointer;"
-                                                           title="Remove document"
-                                                           @onclick="() => editingEmployee.SupportingDocumentPath = null">
-                                                        </i>
-                                                    </span>
-                                                }
+                                            <div class="portrait-upload-box" @onclick="TriggerPortraitUpload">
+                                                <i class="bi bi-person-bounding-box" style="font-size:2.5rem;"></i>
+                                                <small class="mt-1">Upload Photo</small>
                                             </div>
+                                        }
+                                        else
+                                        {
+                                            <img src="@displayPortrait"
+                                                 alt="Portrait"
+                                                 class="portrait-img"
+                                                 @onclick="TriggerPortraitUpload" />
                                         }
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="row mb-2">
-                                <div class="col-md-6">
-                                    <label class="fw-bold small text-muted">Person Potrait (optional)</label>
-                                    <div class="mt-2">
-                                        <InputFile id="portraitFileInput"
-                                                   OnChange="HandlePortraitSelected"
-                                                   class="form-control"
-                                                   accept="image/*"
-                                                   style="display:none;" />
-                                    </div>
-                                    @if (string.IsNullOrEmpty(displayPortrait) || displayPortrait == "/images/placeholder.png")
-                                    {
-                                        <div style="width:120px; height:120px; border-radius:8px; border:2px dashed #adb5bd;
-                                                            display:flex; flex-direction:column; align-items:center; justify-content:center;
-                                                            cursor:pointer; color:#adb5bd; background:#f8f9fa;"
-                                             @onclick="TriggerPortraitUpload">
-                                            <i class="bi bi-person-bounding-box" style="font-size:2rem;"></i>
-                                            <small class="mt-1">Upload Photo</small>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <img src="@displayPortrait"
-                                             alt="Portrait"
-                                             style="width:120px; height:120px; object-fit:cover; border-radius:8px; border:2px dashed #adb5bd; cursor:pointer;"
-                                             @onclick="TriggerPortraitUpload" />
-                                    }
-                                </div>
-                            </div>
                         </div>
                     }
                     else if (activeTab == "vehicle")
                     {
-                        <div class="card p-3 mb-3 border-0 shadow-sm">
+                        <div id="vehicleSection" class="card p-4 mb-3 border-0 shadow-sm">
                             @if (!isViewing)
                             {
-                                <h6 class="border-bottom pb-2 mb-3 fw-bold text-secondary">Vehicle Information</h6>
+                                <h6 class="form-section-title">
+                                    <i class="bi bi-car-front me-2"></i>Vehicle Information
+                                </h6>
+
+                                <!-- Row 1: Vehicle No + Color -->
                                 <div class="row mb-3">
                                     <div class="col-md-6">
-                                        <label class="fw-bold small text-muted">Vehicle No.</label>
-                                        <InputText @bind-Value="editingVehicle.VehicleNo"
-                                                   class="form-control"
-                                                   placeholder="e.g. WA1234B"
-                                                   maxlength="20" />
+                                        <label class="form-label-custom">Vehicle No.</label>
+                                        <input type="text"
+                                               class="form-control @(!string.IsNullOrEmpty(vehicleNoDuplicateError) ? "border-danger bg-light-danger" : "")"
+                                               value="@editingVehicle.VehicleNo"
+                                               @oninput="ValidateVehicleNo"
+                                               placeholder="e.g. WA1234B"
+                                               maxlength="20"
+                                               disabled="@isViewing" />
+                                        @if (!string.IsNullOrEmpty(vehicleNoDuplicateError))
+                                        {
+                                            <div class="text-danger small mt-1 fw-bold">
+                                                <i class="bi bi-exclamation-circle-fill me-1"></i> @vehicleNoDuplicateError
+                                            </div>
+                                        }
                                         <ValidationMessage For="@(() => editingVehicle.VehicleNo)" />
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="fw-bold small text-muted">Color</label>
+                                        <label class="form-label-custom">Color</label>
                                         <InputSelect @bind-Value="editingVehicle.Color" class="form-select">
                                             <option value="">-- Select Color --</option>
                                             <option value="White">White</option>
@@ -363,11 +443,10 @@
                                     </div>
                                 </div>
 
-                                <div class="row mb-2">
+                                <!-- Row 2: Brand + Model -->
+                                <div class="row mb-3">
                                     <div class="col-md-6 position-relative">
-                                        <label class="fw-bold small text-muted">Brand</label>
-
-                                        <!-- Wrapper untuk input + icon -->
+                                        <label class="form-label-custom">Brand</label>
                                         <div class="position-relative">
                                             <input class="form-control pe-4"
                                                    value="@editingVehicle.brand"
@@ -375,14 +454,9 @@
                                                    @onfocus="showAllBrands"
                                                    @onblur="hideBrands"
                                                    placeholder="Search or select brand..." />
-
-                                            <!-- Icon ▼ -->
                                             <span class="position-absolute top-50 end-0 translate-middle-y pe-2 text-muted"
-                                                  style="pointer-events:none;">
-                                                &#9660;
-                                            </span>
+                                                  style="pointer-events:none;">&#9660;</span>
                                         </div>
-
                                         @if (filteredBrands.Any())
                                         {
                                             <ul class="list-group position-absolute z-3"
@@ -400,7 +474,7 @@
                                     </div>
 
                                     <div class="col-md-6 position-relative">
-                                        <label class="fw-bold small text-muted">Model</label>
+                                        <label class="form-label-custom">Model</label>
                                         <div class="position-relative">
                                             <input class="form-control pe-4"
                                                    value="@editingVehicle.Model"
@@ -410,11 +484,8 @@
                                                    placeholder="Search or select model..."
                                                    disabled="@(string.IsNullOrEmpty(editingVehicle.brand))" />
                                             <span class="position-absolute top-50 end-0 translate-middle-y pe-2 text-muted"
-                                                  style="pointer-events:none;">
-                                                &#9660;
-                                            </span>
+                                                  style="pointer-events:none;">&#9660;</span>
                                         </div>
-
                                         @if (filteredModels.Any())
                                         {
                                             <ul class="list-group position-absolute z-3"
@@ -432,68 +503,54 @@
                                     </div>
                                 </div>
 
-                                <div class="row mt-3">
+                                <!-- Add Vehicle Button -->
+                                <div class="row">
                                     <div class="col-md-12 d-flex justify-content-end">
-                                        <button type="button" class="btn btn-primary btn shadow-sm" @onclick="AddVehicle">
-                                            @(onUpdate ? "Update" : "+ Add Vehicle")
+                                        <button type="button" class="btn btn-primary shadow-sm" @onclick="AddVehicle">
+                                            <i class="bi @(onUpdate ? "bi-arrow-repeat" : "bi-plus-circle") me-1"></i>
+                                            @(onUpdate ? "Update" : "Add Vehicle")
                                         </button>
                                     </div>
                                 </div>
                             }
 
+                            <!-- VEHICLE TABLE -->
                             @if (vehicleList.Any())
                             {
                                 <div class="table-responsive mt-3 rounded shadow-sm">
+                                    <h6 class="form-section-title">
+                                        <i class="bi bi-table me-2"></i>Vehicle List
+                                    </h6>
                                     <table class="table table-bordered table-hover table-striped mb-0 align-middle bg-white">
                                         <thead class="table table-hover table-bordered table-striped">
                                             <tr>
                                                 <th style="cursor:pointer;" @onclick='() => SortBy("VehicleNo")'>
                                                     Vehicle No
                                                     @if (sortColumn == "VehicleNo")
-                                                    {
-                                                        <span>@(sortAscending ? "▲" : "▼")</span>
-                                                    }
+                                                    { <span>@(sortAscending ? "▲" : "▼")</span> }
                                                     else
-                                                    {
-
-                                                        <span class="text-muted opacity-50">▲</span>
-                                                    }
+                                                    { <span class="text-muted opacity-50">▲</span> }
                                                 </th>
                                                 <th style="cursor:pointer;" @onclick='() => SortBy("Color")'>
                                                     Color
                                                     @if (sortColumn == "Color")
-                                                    {
-                                                        <span>@(sortAscending ? "▲" : "▼")</span>
-                                                    }
+                                                    { <span>@(sortAscending ? "▲" : "▼")</span> }
                                                     else
-                                                    {
-
-                                                        <span class="text-muted opacity-50">▲</span>
-                                                    }
+                                                    { <span class="text-muted opacity-50">▲</span> }
                                                 </th>
                                                 <th style="cursor:pointer;" @onclick='() => SortBy("Brand")'>
                                                     Brand
                                                     @if (sortColumn == "Brand")
-                                                    {
-                                                        <span>@(sortAscending ? "▲" : "▼")</span>
-                                                    }
+                                                    { <span>@(sortAscending ? "▲" : "▼")</span> }
                                                     else
-                                                    {
-
-                                                        <span class="text-muted opacity-50">▲</span>
-                                                    }
+                                                    { <span class="text-muted opacity-50">▲</span> }
                                                 </th>
                                                 <th style="cursor:pointer;" @onclick='() => SortBy("Model")'>
                                                     Model
                                                     @if (sortColumn == "Model")
-                                                    {
-                                                        <span>@(sortAscending ? "▲" : "▼")</span>
-                                                    }
+                                                    { <span>@(sortAscending ? "▲" : "▼")</span> }
                                                     else
-                                                    {
-
-                                                        <span class="text-muted opacity-50">▲</span>
-                                                    }
+                                                    { <span class="text-muted opacity-50">▲</span> }
                                                 </th>
                                                 @if (!isViewing)
                                                 {
@@ -542,16 +599,18 @@
                                                     @if (!isViewing)
                                                     {
                                                         <td class="text-center">
-                                                            <button type="button" class="btn btn-sm btn-outline-primary me-1"
-                                                                    title="Edit"
-                                                                    @onclick="() => viewVehicle(v)">
-                                                                <i class="bi bi-pencil-square"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger"
-                                                                    title="Remove"
-                                                                    @onclick="async () => await RemoveVehicle(v)">
-                                                                <i class="bi bi-trash3"></i>
-                                                            </button>
+                                                            <div class="d-flex justify-content-center gap-1">
+                                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                                        title="Edit"
+                                                                        @onclick="() => viewVehicle(v)">
+                                                                    <i class="bi bi-pencil-square"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                        title="Remove"
+                                                                        @onclick="async () => await RemoveVehicle(v)">
+                                                                    <i class="bi bi-trash3"></i>
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     }
                                                 </tr>
@@ -560,7 +619,7 @@
                                     </table>
 
                                     <!-- Paging navigation -->
-                                    <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+                                    <div class="d-flex justify-content-between align-items-center mt-2 px-1 pb-2">
                                         <small class="text-muted">
                                             Showing @((currentPage - 1) * pageSize + 1) - @(Math.Min(currentPage * pageSize, vehicleList.Count)) of @vehicleList.Count records
                                         </small>
@@ -601,25 +660,303 @@
                             }
                         </div>
                     }
+                    else if (activeTab == "vehicle")
+                    {
+                        <div class="row">
+                            @if (!isViewing)
+                            {
+                                <div class="col-12 mb-4">
+                                    <div class="card p-4 border-0 shadow-sm">
+                                        <h6 class="form-section-title">
+                                            <i class="bi bi-car-front me-2"></i>Vehicle Information
+                                        </h6>
+
+                                        <!-- Row 1: Vehicle No + Color -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label-custom">Vehicle No.</label>
+                                                <InputText @bind-Value="editingVehicle.VehicleNo"
+                                                           class="form-control"
+                                                           placeholder="e.g. WA1234B"
+                                                           maxlength="20" />
+                                                <ValidationMessage For="@(() => editingVehicle.VehicleNo)" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label-custom">Color</label>
+                                                <InputSelect @bind-Value="editingVehicle.Color" class="form-select">
+                                                    <option value="">-- Select Color --</option>
+                                                    <option value="White">White</option>
+                                                    <option value="Black">Black</option>
+                                                    <option value="Silver">Silver</option>
+                                                    <option value="Grey">Grey</option>
+                                                    <option value="Red">Red</option>
+                                                    <option value="Blue">Blue</option>
+                                                    <option value="Brown">Brown</option>
+                                                </InputSelect>
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 2: Brand + Model -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 position-relative">
+                                                <label class="form-label-custom">Brand</label>
+                                                <div class="position-relative">
+                                                    <input class="form-control pe-4"
+                                                           value="@editingVehicle.brand"
+                                                           @oninput="FilterBrands"
+                                                           @onfocus="showAllBrands"
+                                                           @onblur="hideBrands"
+                                                           placeholder="Search or select brand..." />
+                                                    <span class="position-absolute top-50 end-0 translate-middle-y pe-2 text-muted"
+                                                          style="pointer-events:none;">&#9660;</span>
+                                                </div>
+                                                @if (filteredBrands.Any())
+                                                {
+                                                    <ul class="list-group position-absolute z-3"
+                                                        style="width:100%; max-height:200px; overflow-y:auto; top:100%; left:0;">
+                                                        @foreach (var brand in filteredBrands)
+                                                        {
+                                                            <li class="list-group-item list-group-item-action"
+                                                                @onmousedown="() => selectBrand(brand)">
+                                                                @brand
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                                <ValidationMessage For="@(() => editingVehicle.brand)" />
+                                            </div>
+
+                                            <div class="col-md-6 position-relative">
+                                                <label class="form-label-custom">Model</label>
+                                                <div class="position-relative">
+                                                    <input class="form-control pe-4"
+                                                           value="@editingVehicle.Model"
+                                                           @oninput="FilterModels"
+                                                           @onfocus="showAllModels"
+                                                           @onblur="HideModels"
+                                                           placeholder="Search or select model..."
+                                                           disabled="@(string.IsNullOrEmpty(editingVehicle.brand))" />
+                                                    <span class="position-absolute top-50 end-0 translate-middle-y pe-2 text-muted"
+                                                          style="pointer-events:none;">&#9660;</span>
+                                                </div>
+                                                @if (filteredModels.Any())
+                                                {
+                                                    <ul class="list-group position-absolute z-3"
+                                                        style="width:100%; max-height:200px; overflow-y:auto; top:100%; left:0;">
+                                                        @foreach (var model in filteredModels)
+                                                        {
+                                                            <li class="list-group-item list-group-item-action"
+                                                                @onmousedown="() => selectModel(model)">
+                                                                @model
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                                <ValidationMessage For="@(() => editingVehicle.Model)" />
+                                            </div>
+                                        </div>
+
+                                        <!-- Add Vehicle Button -->
+                                        <div class="row">
+                                            <div class="col-md-12 d-flex justify-content-end">
+                                                <button type="button" class="btn btn-primary shadow-sm" @onclick="AddVehicle">
+                                                    <i class="bi @(onUpdate ? "bi-arrow-repeat" : "bi-plus-circle") me-1"></i>
+                                                    @(onUpdate ? "Update" : "Add Vehicle")
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- VEHICLE TABLE SECTION -->
+                            <div class="col-12">
+                                <div class="card p-4 border-0 shadow-sm">
+                                    <h6 class="form-section-title">
+                                        <i class="bi bi-table me-2"></i>Vehicle List
+                                    </h6>
+                                    @if (vehicleList.Any())
+                                    {
+                                        <div class="table-responsive rounded shadow-sm">
+                                            <table class="table table-bordered table-hover table-striped mb-0 align-middle bg-white">
+                                                <thead class="table table-hover table-bordered table-striped">
+                                                    <tr>
+                                                        <th style="cursor:pointer;" @onclick='() => SortBy("VehicleNo")'>
+                                                            Vehicle No
+                                                            @if (sortColumn == "VehicleNo")
+                                                            { <span>@(sortAscending ? "▲" : "▼")</span> }
+                                                            else
+                                                            { <span class="text-muted opacity-50">▲</span> }
+                                                        </th>
+                                                        <th style="cursor:pointer;" @onclick='() => SortBy("Color")'>
+                                                            Color
+                                                            @if (sortColumn == "Color")
+                                                            { <span>@(sortAscending ? "▲" : "▼")</span> }
+                                                            else
+                                                            { <span class="text-muted opacity-50">▲</span> }
+                                                        </th>
+                                                        <th style="cursor:pointer;" @onclick='() => SortBy("Brand")'>
+                                                            Brand
+                                                            @if (sortColumn == "Brand")
+                                                            { <span>@(sortAscending ? "▲" : "▼")</span> }
+                                                            else
+                                                            { <span class="text-muted opacity-50">▲</span> }
+                                                        </th>
+                                                        <th style="cursor:pointer;" @onclick='() => SortBy("Model")'>
+                                                            Model
+                                                            @if (sortColumn == "Model")
+                                                            { <span>@(sortAscending ? "▲" : "▼")</span> }
+                                                            else
+                                                            { <span class="text-muted opacity-50">▲</span> }
+                                                        </th>
+                                                        @if (!isViewing)
+                                                        {
+                                                            <th>Action</th>
+                                                        }
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            <input class="form-control form-control-sm"
+                                                                   placeholder="Search..."
+                                                                   value="@filterVehicleNo"
+                                                                   @oninput="OnVehicleSearchInput" />
+                                                        </th>
+                                                        <th>
+                                                            <input class="form-control form-control-sm"
+                                                                   placeholder="Search..."
+                                                                   value="@filterColor"
+                                                                   @oninput="OnColorSearchInput" />
+                                                        </th>
+                                                        <th>
+                                                            <input class="form-control form-control-sm"
+                                                                   placeholder="Search..."
+                                                                   value="@filterBrand"
+                                                                   @oninput="OnBrandSearchInput" />
+                                                        </th>
+                                                        <th>
+                                                            <input class="form-control form-control-sm"
+                                                                   placeholder="Search..."
+                                                                   value="@filterModel"
+                                                                   @oninput="OnModelSearchInput" />
+                                                        </th>
+                                                        @if (!isViewing)
+                                                        {
+                                                            <th></th>
+                                                        }
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var v in pagedVehicles)
+                                                    {
+                                                        <tr>
+                                                            <td class="text-center">@v.VehicleNo</td>
+                                                            <td class="text-center">@v.Color</td>
+                                                            <td class="text-center">@v.brand</td>
+                                                            <td class="text-center">@v.Model</td>
+                                                            @if (!isViewing)
+                                                            {
+                                                                <td class="text-center">
+                                                                    <div class="d-flex justify-content-center gap-1">
+                                                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                                                title="Edit"
+                                                                                @onclick="() => viewVehicle(v)">
+                                                                            <i class="bi bi-pencil-square"></i>
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                                title="Remove"
+                                                                                @onclick="async () => await RemoveVehicle(v)">
+                                                                            <i class="bi bi-trash3"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            }
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+
+                                            <!-- Paging navigation -->
+                                            <div class="d-flex justify-content-between align-items-center mt-2 px-1 pb-2">
+                                                <small class="text-muted">
+                                                    Showing @((currentPage - 1) * pageSize + 1) - @(Math.Min(currentPage * pageSize, vehicleList.Count)) of @vehicleList.Count records
+                                                </small>
+                                                <div class="d-flex gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                            @onclick="() => currentPage = 1"
+                                                            disabled="@(currentPage == 1)">
+                                                        «
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                            @onclick="() => currentPage--"
+                                                            disabled="@(currentPage == 1)">
+                                                        ‹
+                                                    </button>
+
+                                                    @for (int i = 1; i <= totalPages; i++)
+                                                    {
+                                                        var pageNum = i;
+                                                        <button type="button" class="btn btn-sm @(currentPage == pageNum ? "btn-primary" : "btn-outline-secondary")"
+                                                                @onclick="() => currentPage = pageNum">
+                                                            @pageNum
+                                                        </button>
+                                                    }
+
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                            @onclick="() => currentPage++"
+                                                            disabled="@(currentPage == totalPages)">
+                                                        ›
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                            @onclick="() => currentPage = totalPages"
+                                                            disabled="@(currentPage == totalPages)">
+                                                        »
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info mb-0">
+                                            No vehicles registered for this employee yet.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </EditForm>
             </div>
         </div>
-        <div class="sticky-footer d-flex justify-content-end">
-            <button type="button" class="btn btn-secondary px-4 shadow-sm me-2" @onclick="ResetForm">
-                Back to Search
-            </button>
-            @if (!isViewing && activeTab == "user")
+
+        <!-- STICKY FOOTER -->
+        <div class="sticky-footer d-flex justify-content-end gap-2 mt-3">
+            @if (activeTab == "user")
             {
-                <button type="button" class="btn btn-primary px-4 shadow-sm"
-                        @onclick="@(() => SetActiveTab("vehicle"))">
-                    <i class="bi bi-arrow-right"></i>
+                <button type="button" class="btn btn-secondary px-4 shadow-sm" @onclick="ResetForm">
+                    <i class="bi bi-arrow-return-left me-1"></i> Back to Search
                 </button>
+                @if (!isViewing)
+                {
+                    <button type="button" class="btn btn-primary px-4 shadow-sm"
+                            @onclick="HandleNextStep">
+                        Next <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                }
             }
-            @if (!isViewing && activeTab == "vehicle")
+            else if (activeTab == "vehicle")
             {
-                <button form="employeeForm" type="submit" class="btn btn-success px-5 shadow-sm fw-bold">
-                    @(isEditing ? "Save Changes" : "Submit Record")
+                <button type="button" class="btn btn-secondary px-4 shadow-sm"
+                        @onclick="@(() => SetActiveTab("user"))">
+                    <i class="bi bi-arrow-left me-1"></i> Back
                 </button>
+                @if (!isViewing)
+                {
+                    <button form="employeeForm" type="submit" class="btn btn-success px-5 shadow-sm fw-bold">
+                        <i class="bi bi-check-circle me-1"></i>
+                        @(isEditing ? "Save Changes" : "Submit Record")
+                    </button>
+                }
             }
         </div>
     </div>
