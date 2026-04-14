@@ -1,0 +1,100 @@
+@page "/gpsmap"
+@using Testing.Components.Model
+@rendermode InteractiveServer
+
+<PageTitle>GPS Map Tracker</PageTitle>
+
+<div class="d-print-none">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
+            GPS Locations Tracker
+        </h1>
+        <div class="text-muted small">
+            Click anywhere on the map to plot a new location.
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger shadow-sm">@errorMessage</div>
+    }
+
+    <div class="row">
+        <!-- MAP COLUMN -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-dark text-white">
+                    <i class="bi bi-map me-1"></i> Interactive Map
+                </div>
+                <div class="card-body p-0">
+                    <!-- This div is where Leaflet will render our OpenStreetMap -->
+                    <div id="osmMap" style="height: 600px; width: 100%; z-index: 1;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM & LIST COLUMN -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-pin-map me-1"></i> Recent Coordinates
+                </div>
+                <div class="card-body bg-light">
+                    
+                    @if (isFormVisible)
+                    {
+                        <div class="alert alert-info py-2 shadow-sm border-0">
+                            <strong>Add New Coordinate:</strong>
+                            <div class="mt-2 text-muted small">Latitude: @newLat.ToString("0.######")</div>
+                            <div class="mb-2 text-muted small">Longitude: @newLng.ToString("0.######")</div>
+
+                            <label class="form-label-custom">Title / Location Name</label>
+                            <input class="form-control mb-2" @bind="newTitle" placeholder="e.g. Headquarters" />
+
+                            <label class="form-label-custom">Description (Optional)</label>
+                            <textarea class="form-control mb-3" @bind="newDesc" rows="2" placeholder="Describe this place..."></textarea>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <button class="btn btn-sm btn-secondary" @onclick="CancelPlot">Cancel</button>
+                                <button class="btn btn-sm btn-success" @onclick="SaveCoordinate">Save & Plot Pin</button>
+                            </div>
+                        </div>
+                    }
+
+                    <h6 class="form-section-title mt-4 mb-3">Saved Locations</h6>
+                    @if (savedLocations == null)
+                    {
+                        <div class="text-center p-3">
+                            <span class="spinner-border spinner-border-sm text-primary"></span>
+                        </div>
+                    }
+                    else if (!savedLocations.Any())
+                    {
+                        <div class="text-center text-muted p-3">No GPS tracking data found.</div>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush shadow-sm rounded" style="max-height: 400px; overflow-y: auto;">
+                            @foreach(var loc in savedLocations)
+                            {
+                                <div class="list-group-item list-group-item-action flex-column align-items-start py-3" 
+                                     style="cursor: pointer;"
+                                     @onclick="() => GoToLocation(loc)">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 text-primary fw-bold">@loc.Title</h6>
+                                        <small class="text-muted">@loc.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                    </div>
+                                    <p class="mb-1 small">@loc.Description</p>
+                                    <small class="text-muted" style="font-size: 0.75rem;">
+                                        Lat: @loc.Latitude.ToString("0.######"), Lng: @loc.Longitude.ToString("0.######")
+                                    </small>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

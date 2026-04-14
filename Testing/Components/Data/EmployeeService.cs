@@ -437,5 +437,51 @@ public class EmployeeService
         command.Parameters.AddWithValue("@PersonPortraitPath", (object?)employee.PersonPortraitPath ?? DBNull.Value);
         command.Parameters.AddWithValue("@MaritalStatus", (object?)employee.MaritalStatus ?? DBNull.Value);
     }
+
+    #region GPS Location Methods
+    public async Task<List<GpsLocation>> GetGpsLocationsAsync()
+    {
+        var locations = new List<GpsLocation>();
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string query = @"SELECT Id, Latitude, Longitude, Title, Description, CreatedAt FROM GpsLocations ORDER BY CreatedAt DESC";
+        using var command = new SqlCommand(query, connection);
+        using var reader = await command.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            locations.Add(new GpsLocation
+            {
+                Id = reader.GetInt32(0),
+                Latitude = reader.GetDouble(1),
+                Longitude = reader.GetDouble(2),
+                Title = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                Description = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                CreatedAt = reader.GetDateTime(5)
+            });
+        }
+        return locations;
+    }
+
+    public async Task AddGpsLocationAsync(GpsLocation location)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        string query = @"
+            INSERT INTO GpsLocations (Latitude, Longitude, Title, Description, CreatedAt)
+            VALUES (@Lat, @Lng, @Title, @Desc, @Created)";
+
+        using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@Lat", location.Latitude);
+        command.Parameters.AddWithValue("@Lng", location.Longitude);
+        command.Parameters.AddWithValue("@Title", location.Title);
+        command.Parameters.AddWithValue("@Desc", location.Description);
+        command.Parameters.AddWithValue("@Created", location.CreatedAt);
+
+        await command.ExecuteNonQueryAsync();
+    }
+    #endregion
 }
 
