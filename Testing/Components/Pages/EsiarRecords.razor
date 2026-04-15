@@ -1,0 +1,237 @@
+@page "/esiar"
+@using Testing.Components.Model
+@rendermode InteractiveServer
+
+<PageTitle>e-SIAR Records</PageTitle>
+
+<div class="d-print-none">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-file-earmark-text-fill me-2"></i>
+            e-SIAR Records
+        </h1>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-dark text-white">
+            <i class="bi bi-search me-1"></i> Search & Filter Records
+        </div>
+        <div class="card-body bg-light">
+            <div class="row mb-2 align-items-end p-3 bg-white border rounded shadow-sm mx-0">
+
+                <div class="col-md-2 mb-2 mb-md-0">
+                    <label class="form-label-custom">Jabatan (Dept)</label>
+                    <select @bind="selectedDept" class="form-select">
+                        <option value="">SEMUA</option>
+                        @foreach (var dept in deptList)
+                        {
+                            <option value="@dept.Value">@dept.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2 mb-2 mb-md-0">
+                    <label class="form-label-custom">Jenis Dokumen</label>
+                    <select @bind="selectedJenisDoc" class="form-select">
+                        <option value="">SEMUA</option>
+                        @foreach (var docType in docTypeList)
+                        {
+                            <option value="@docType.Value">@docType.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <label class="form-label-custom">Carian Tajuk</label>
+                    <input type="text" @bind="keyTitle" class="form-control border-primary" placeholder="Masukkan tajuk..." />
+                </div>
+
+                <div class="col-md-2 mb-2 mb-md-0">
+                    <label class="form-label-custom">Tarikh Dari</label>
+                    <input type="date" @bind="dateFrom" class="form-control" />
+                </div>
+
+                <div class="col-md-2 mb-2 mb-md-0">
+                    <label class="form-label-custom">Tarikh Hingga</label>
+                    <input type="date" @bind="dateTo" class="form-control" />
+                </div>
+
+                <div class="col-md-1 d-flex align-items-end mb-2 mb-md-0">
+                    <button class="btn btn-primary w-100 shadow-sm" @onclick="SearchRecords">
+                        <i class="bi bi-search me-1"></i> Cari
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body bg-light">
+
+            @if (isLoading)
+            {
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted"><em>Retrieving records...</em></p>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger shadow-sm">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> @errorMessage
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive rounded shadow-sm">
+                    <table class="table table-hover table-striped mb-0 align-middle table-bordered bg-white">
+                        <thead class="table-dark text-center">
+                            <tr>
+                                <th>Dept Name</th>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Publish Date</th>
+                                <th style="width: 120px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (records.Any())
+                            {
+                                @foreach (var record in records)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@record.DeptName</td>
+                                        <td class="text-truncate" style="max-width: 200px;" title="@record.Title">@record.Title</td>
+                                        <td class="text-truncate" style="max-width: 200px;" title="@record.Desc">@record.Desc</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary">@record.TypeName</span>
+                                        </td>
+                                        <td class="text-center">@record.PublishDate</td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-primary shadow-sm" @onclick="() => ViewDocument(record)">
+                                                <i class="bi bi-file-pdf me-1"></i> View PDF
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox me-2"></i> No records found.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3 bg-white p-2 rounded shadow-sm border">
+                    <div class="text-muted small">
+                        Papar <strong>@records.Count</strong> dari <strong>@totalRecords</strong> rekod
+                    </div>
+                    <nav aria-label="e-SIAR pagination">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <button class="page-link" @onclick="PrevPage">Sebelum</button>
+                            </li>
+                            <li class="page-item active">
+                                <span class="page-link">Halaman @currentPage</span>
+                            </li>
+                            <li class="page-item @(currentPage* pageSize >= totalRecords ? "disabled" : "")">
+                                <button class="page-link" @onclick="NextPage">Seterusnya</button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+
+        </div>
+    </div>
+
+    <!-- PDF Viewer Modal -->
+    @if (selectedRecord != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content shadow-lg border-0">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>
+                            @selectedRecord.Title
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="CloseViewer"></button>
+                    </div>
+                    <div class="modal-body p-0" style="height: 80vh;">
+                        @if (pdfLoadError)
+                        {
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100 bg-light text-center px-4">
+                                <div style="width:80px; height:80px; background:#fee2e2; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:1.5rem;">
+                                    <i class="bi bi-file-earmark-x-fill text-danger" style="font-size:2.2rem;"></i>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-1">Dokumen Tidak Dijumpai</h5>
+                                <p class="text-muted mb-1" style="max-width:420px;">
+                                    Fail PDF untuk dokumen ini tidak dapat diakses. Fail mungkin telah dipindahkan, dipadam, atau belum dimuat naik.
+                                </p>
+                                <p class="text-muted small mb-4">
+                                    <i class="bi bi-folder2 me-1"></i>
+                                    <code class="text-secondary">@selectedRecord.FilePath</code>
+                                </p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary shadow-sm" @onclick="CloseViewer">
+                                        <i class="bi bi-arrow-left me-1"></i> Kembali
+                                    </button>
+                                    <button class="btn btn-primary shadow-sm" @onclick="RetryLoadPdf">
+                                        <i class="bi bi-arrow-clockwise me-1"></i> Cuba Semula
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        else if (pdfIsLoading)
+                        {
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100 bg-light">
+                                <div class="spinner-border text-primary mb-3" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="text-muted">Memuatkan dokumen...</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <iframe src="@pdfUrl"
+                                    width="100%"
+                                    height="100%"
+                                    style="border: none;"
+                                    @onload="OnIframeLoad"
+                                    @onerror="OnIframeError">
+                            </iframe>
+                        }
+                    </div>
+                    <div class="modal-footer bg-light p-2 d-flex justify-content-between align-items-center">
+                        @if (pdfLoadError)
+                        {
+                            <small class="text-danger">
+                                <i class="bi bi-exclamation-circle me-1"></i>
+                                Sila hubungi admin sistem jika masalah berterusan.
+                            </small>
+                        }
+                        else
+                        {
+                            <span></span>
+                        }
+                        <button type="button" class="btn btn-secondary shadow-sm" @onclick="CloseViewer">
+                            <i class="bi bi-x-circle me-1"></i> Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
