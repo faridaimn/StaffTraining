@@ -1,5 +1,6 @@
-using System.Data.Common;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using System.Data.Common;
 using Testing.Components.Data;
 using Testing.Components.Model;
 
@@ -9,6 +10,7 @@ public partial class EsiarRecords
 {
     [Inject] private EsiarService EsiarService { get; set; } = default!;
     [Inject] private NavigationManager NavManager { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private bool isLoading = true;
     private string? errorMessage = null;
@@ -40,6 +42,10 @@ public partial class EsiarRecords
     //pdf viewer
     protected EsiarDetail? selectRecord = null;
 
+    // modal window
+    private bool isMinimized = false;
+    private bool isMaximized = false;
+    private const string ModalId = "pdfViewerModal";
 
     protected override async Task OnInitializedAsync()
     {
@@ -242,6 +248,8 @@ public partial class EsiarRecords
         selectedRecord = record;
         pdfLoadError = false;
         pdfIsLoading = true;
+        isMinimized = false;
+        isMaximized = false;
         pdfUrl = null;
         StateHasChanged();
 
@@ -249,17 +257,9 @@ public partial class EsiarRecords
         {
             var relativeUrl = GetPdfUrl(record.FilePath);
             var absoluteUrl = NavManager.ToAbsoluteUri(relativeUrl).ToString();
-
             var response = await EsiarService.CheckPdfExistsAsync(absoluteUrl);
-            if (response)
-            {
-                pdfUrl = relativeUrl;
-                pdfLoadError = false;
-            }
-            else
-            {
-                pdfLoadError = true;
-            }
+            pdfUrl = response ? relativeUrl : null;
+            pdfLoadError = !response;
         }
         catch
         {
@@ -270,6 +270,37 @@ public partial class EsiarRecords
             pdfIsLoading = false;
             StateHasChanged();
         }
+
+        // Tunggu Blazor render dulu, then baru init drag
+        await Task.Delay(150);
+        try
+        {
+            await JS.InvokeVoidAsync("modalInterop.makeDraggable", ModalId);
+        }
+        catch { /* silent */ }
+    }
+
+    private async Task ToggleMinimize()
+    {
+        isMinimized = !isMinimized;
+        if (isMinimized) isMaximized = false;
+
+        if (!isMinimized)
+        {
+            await Task.Delay(100);
+            try { await JS.InvokeVoidAsync("modalInterop.makeDraggable", ModalId); }
+            catch { }
+        }
+    }
+
+    private async Task ToggleMaximize()
+    {
+        isMaximized = !isMaximized;
+        if (isMaximized) isMinimized = false;
+
+        await Task.Delay(100);
+        try { await JS.InvokeVoidAsync("modalInterop.makeDraggable", ModalId); }
+        catch { }
     }
 
     private void OnIframeLoad()
