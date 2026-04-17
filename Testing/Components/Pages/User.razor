@@ -183,26 +183,23 @@
 {
     <div class="d-print-none" id="formSection">
 
-        @if (Source != "personlistpage")
-        {
-            <!-- NAVIGATION TAB -->
-            <ul class="nav nav-tabs mb-3 d-print-none">
-                <li class="nav-item">
-                    <button type="button"
-                            class="nav-link @(activeTab == "user" ? "active" : "")"
-                            @onclick="@(() => SetActiveTab("user"))">
-                        <i class="bi bi-person-badge me-2"></i>Employee Details
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button type="button"
-                            class="nav-link @(activeTab == "vehicle" ? "active" : "")"
-                            @onclick="@(() => SetActiveTab("vehicle"))">
-                        <i class="bi bi-car-front-fill me-2"></i>Vehicle Information
-                    </button>
-                </li>
-            </ul>
-        }
+        <!-- NAVIGATION TAB -->
+        <ul class="nav nav-tabs mb-3 d-print-none">
+            <li class="nav-item">
+                <button type="button"
+                        class="nav-link @(activeTab == "user" ? "active" : "")"
+                        @onclick="@(() => SetActiveTab("user"))">
+                    <i class="bi bi-person-badge me-2"></i>Employee Details
+                </button>
+            </li>
+            <li class="nav-item">
+                <button type="button"
+                        class="nav-link @(activeTab == "vehicle" ? "active" : "")"
+                        @onclick="@(() => SetActiveTab("vehicle"))">
+                    <i class="bi bi-car-front-fill me-2"></i>Vehicle Information
+                </button>
+            </li>
+        </ul>
 
         <div class="card shadow-lg border-0">
             <div class="card-header @(isViewing ? "bg-info text-white" : (isEditing ? "bg-warning" : "bg-primary text-white")) d-flex justify-content-between align-items-center">
@@ -211,7 +208,7 @@
                     @(isEditing ? "Edit Employee Record" : (isViewing ? "Employee Details" : "Create New Employee"))
                 </h5>
                 <button type="button" class="btn btn-sm btn-light shadow-sm fw-bold" @onclick="ResetForm">
-                    <i class="bi bi-arrow-return-left"></i> Back to List
+                    <i class="bi bi-arrow-return-left"></i> @(Source == "personlist" || Source == "personlistpage" ? "Back" : "Back to List")
                 </button>
             </div>
             <div class="card-body bg-light form-content-wrapper">
@@ -934,15 +931,12 @@
             @if (activeTab == "user")
             {
                 <button type="button" class="btn btn-secondary px-4 shadow-sm" @onclick="ResetForm">
-                    <i class="bi bi-arrow-return-left me-1"></i> Back to Search
+                    <i class="bi bi-arrow-return-left me-1"></i> @(Source == "personlist" || Source == "personlistpage" ? "Back" : "Back to Search")
                 </button>
-                @if (!isViewing)
-                {
-                    <button type="button" class="btn btn-primary px-4 shadow-sm"
-                            @onclick="HandleNextStep">
-                        Next <i class="bi bi-arrow-right ms-1"></i>
-                    </button>
-                }
+                <button type="button" class="btn btn-primary px-4 shadow-sm"
+                        @onclick="HandleNextStep">
+                    Next <i class="bi bi-arrow-right ms-1"></i>
+                </button>
             }
             else if (activeTab == "vehicle")
             {

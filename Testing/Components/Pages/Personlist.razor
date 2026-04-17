@@ -1,8 +1,8 @@
-﻿@page "/personlist"
+@page "/personlist"
 @page "/personlist/{gender}"
 @page "/personlist/all"
 @page "/personlist/nationality/{nationalityName}"
-@page "/personlist/marital/{maritalStatus}"          
+@page "/personlist/marital/{maritalStatus}"
 @page "/personlist/birthyear/{birthYear}"
 @using Testing.Components.Shared
 @using Testing.Components.Data
@@ -16,270 +16,285 @@
               Vehicles="@popupVehicles"
               OnClose="@(() => showModal = false)" />
 
+<PageTitle>Person List</PageTitle>
 
-<h3>
-    Person List
-    @(!string.IsNullOrEmpty(MaritalStatus) ? $"- Marital: {MaritalStatus}" :
-        !string.IsNullOrEmpty(BirthYear) ? $"- Birth Year: {BirthYear}" :
-        !string.IsNullOrEmpty(NationalityName) ? $"- {NationalityName}" :
-        Gender == "all" ? "- All" :
-        Gender == "hasGender" ? "- Has Gender" :
-        Gender == "hasNationality" ? "- Has Nationality" :
-        Gender == "hasMarital" ? "- Has Marital Status" :
-        Gender == "hasBirthYear" ? "- Has Birth Year" :
-        !string.IsNullOrEmpty(Gender) ? $"- {Gender}" : "")
-</h3>
+<div class="d-print-none">
 
-@{
-    var totalRecords = persons?.Count ?? 0;
-    var withVehicles = persons?.Count(p => (p.Vehicles?.Count ?? 0) > 0) ?? 0;
-    var totalVehicles = persons?.Sum(p => p.Vehicles?.Count ?? 0) ?? 0;
-}
-
-<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:1.5rem;">
-    <div style="background:#E6F1FB; border-radius:8px; padding:1rem; border:1px solid #dee2e6;">
-        <div style="font-size:12px; color:#6c757d; margin-bottom:6px;">Total records</div>
-        <div style="font-size:22px; font-weight:500;">@totalRecords</div>
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="bi bi-people-fill me-2"></i>
+                Person List
+                <small class="fs-6 text-muted fw-normal ms-2">
+                    @(!string.IsNullOrEmpty(MaritalStatus) ? $"— Marital: {MaritalStatus}" :
+                                    !string.IsNullOrEmpty(BirthYear) ? $"— Birth Year: {BirthYear}" :
+                                    !string.IsNullOrEmpty(NationalityName) ? $"— {NationalityName}" :
+                                    Gender == "all" ? "— All" :
+                                    Gender == "hasGender" ? "— Has Gender" :
+                                    Gender == "hasNationality" ? "— Has Nationality" :
+                                    Gender == "hasMarital" ? "— Has Marital Status" :
+                                    Gender == "hasBirthYear" ? "— Has Birth Year" :
+                                    !string.IsNullOrEmpty(Gender) ? $"— {Gender}" : "")
+                </small>
+            </h1>
+            <button class="btn btn-outline-secondary shadow-sm" @onclick="GoBack">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </button>
     </div>
-    <div style="background:#E6F1FB; border-radius:8px; padding:1rem; border:1px solid #dee2e6;">
-        <div style="font-size:12px; color:#6c757d; margin-bottom:6px;">With vehicles</div>
-        <div style="font-size:22px; font-weight:500;">@withVehicles</div>
+
+    <!-- STAT CARDS -->
+    @{
+        var totalRecords = persons?.Count ?? 0;
+        var withVehicles = persons?.Count(p => (p.Vehicles?.Count ?? 0) > 0) ?? 0;
+        var totalVehicles = persons?.Sum(p => p.Vehicles?.Count ?? 0) ?? 0;
+    }
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body stat-card">
+                    <div class="label"><i class="bi bi-person-lines-fill me-1"></i>Total records</div>
+                    <div class="value">@totalRecords</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body stat-card">
+                    <div class="label"><i class="bi bi-car-front-fill me-1"></i>With vehicles</div>
+                    <div class="value">@withVehicles</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body stat-card">
+                    <div class="label"><i class="bi bi-collection-fill me-1"></i>Total vehicles</div>
+                    <div class="value">@totalVehicles</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div style="background:#E6F1FB; border-radius:8px; padding:1rem; border:1px solid #dee2e6;">
-        <div style="font-size:12px; color:#6c757d; margin-bottom:6px;">Total vehicles</div>
-        <div style="font-size:22px; font-weight:500;">@totalVehicles</div>
+
+    <!-- SEARCH & LIST SECTION -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body px-0 py-2">
+
+            <!-- Loading -->
+            @if (persons == null)
+            {
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted"><em>Loading records...</em></p>
+                </div>
+            }
+            else if (filteredPersons.Count == 0)
+            {
+                <div class="alert alert-warning text-center shadow-sm">
+                    No records found matching your criteria.
+                </div>
+            }
+            else
+            {
+                <!-- TABLE -->
+                <div class="table-responsive rounded shadow-sm">
+                    <table class="table table-hover table-striped mb-0 align-middle table-bordered bg-white">
+                        <thead class="table-dark text-center">
+                            <tr>
+                                <th class="sortable" @onclick='() => SortBy("IC_No")'>
+                                    IC No
+                                    @if (sortColumn == "IC_No")
+                                    {
+                                        <i class="bi @(sortAscending ? "bi-sort-alpha-down" : "bi-sort-alpha-down-alt") sort-icon"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size:0.7rem;"></i>
+                                    }
+                                </th>
+                                <th class="sortable" @onclick='() => SortBy("PersonName")'>
+                                    Name
+                                    @if (sortColumn == "PersonName")
+                                    {
+                                        <i class="bi @(sortAscending ? "bi-sort-alpha-down" : "bi-sort-alpha-down-alt") sort-icon"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size:0.7rem;"></i>
+                                    }
+                                </th>
+                                <th class="sortable" @onclick='() => SortBy("Gender")'>
+                                    Gender
+                                    @if (sortColumn == "Gender")
+                                    {
+                                        <i class="bi @(sortAscending ? "bi-sort-alpha-down" : "bi-sort-alpha-down-alt") sort-icon"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size:0.7rem;"></i>
+                                    }
+                                </th>
+                                <th class="sortable" @onclick='() => SortBy("MaritalStatus")'>
+                                    Marital Status
+                                    @if (sortColumn == "MaritalStatus")
+                                    {
+                                        <i class="bi @(sortAscending ? "bi-sort-alpha-down" : "bi-sort-alpha-down-alt") sort-icon"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size:0.7rem;"></i>
+                                    }
+                                </th>
+                                <th class="sortable" @onclick='() => SortBy("BirthYear")'>
+                                    Birth Year
+                                    @if (sortColumn == "BirthYear")
+                                    {
+                                        <i class="bi @(sortAscending ? "bi-sort-numeric-down" : "bi-sort-numeric-down-alt") sort-icon"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size:0.7rem;"></i>
+                                    }
+                                </th>
+                                <th class="sortable" @onclick='() => SortBy("Nationality")'>
+                                    Nationality
+                                    @if (sortColumn == "Nationality")
+                                    {
+                                        <i class="bi @(sortAscending ? "bi-sort-alpha-down" : "bi-sort-alpha-down-alt") sort-icon"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size:0.7rem;"></i>
+                                    }
+                                </th>
+                                <th class="sortable" @onclick='() => SortBy("VehicleCount")'>
+                                    Vehicle Count
+                                    @if (sortColumn == "VehicleCount")
+                                    {
+                                        <i class="bi @(sortAscending ? "bi-sort-numeric-down" : "bi-sort-numeric-down-alt") sort-icon"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-arrow-down-up sort-icon text-muted" style="font-size:0.7rem;"></i>
+                                    }
+                                </th>
+                                <th style="min-width:140px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var person in pagedPersons)
+                            {
+                                var vehicleCount = person.Vehicles?.Count ?? 0;
+                                <tr>
+                                    <td class="text-center fw-bold">@person.IC_No</td>
+                                    <td class="text-truncate" style="max-width:160px;" title="@person.PersonName">@person.PersonName</td>
+                                    <td class="text-center">
+                                        @if (person.Gender == "Male")
+                                        {
+                                            <span class="badge rounded-pill" style="background:#E6F1FB;color:#0C447C;font-size:11px;">Male</span>
+                                        }
+                                        else if (person.Gender == "Female")
+                                        {
+                                            <span class="badge rounded-pill" style="background:#FBEAF0;color:#72243E;font-size:11px;">Female</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (!string.IsNullOrEmpty(person.MaritalStatus))
+                                        {
+                                            @switch (person.MaritalStatus)
+                                            {
+                                                case "Single":
+                                                    <span class="badge rounded-pill" style="background:#FEF3C7;color:#92400E;font-size:11px;">Single</span>
+                                                    break;
+                                                case "Married":
+                                                    <span class="badge rounded-pill" style="background:#D1FAE5;color:#065F46;font-size:11px;">Married</span>
+                                                    break;
+                                                case "Divorced":
+                                                    <span class="badge rounded-pill" style="background:#F3F4F6;color:#374151;font-size:11px;">Divorced</span>
+                                                    break;
+                                                case "Widowed":
+                                                    <span class="badge rounded-pill" style="background:#E9D5FF;color:#6B21A8;font-size:11px;">Widowed</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge rounded-pill" style="background:#F3F4F6;color:#374151;font-size:11px;">@person.MaritalStatus</span>
+                                                    break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">@(person.BirthDate?.Year.ToString() ?? "-")</td>
+                                    <td class="text-center">@GetNationalityName(person.nationality_id)</td>
+                                    <td class="text-center">
+                                        <div class="d-flex align-items-center justify-content-center gap-2"
+                                             style="cursor:pointer;"
+                                             @onclick="() => ShowVehiclePopup(person.IC_No, person.PersonName)">
+                                            <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
+                                                <path d="M4.5 6L6.5 2H15.5L17.5 6" stroke="#185FA5" stroke-width="1.4" stroke-linecap="round" />
+                                                <rect x="1" y="6" width="20" height="7" rx="2" fill="#185FA5" fill-opacity="0.15" stroke="#185FA5" stroke-width="1.4" />
+                                                <circle cx="5" cy="13" r="2" fill="#185FA5" />
+                                                <circle cx="17" cy="13" r="2" fill="#185FA5" />
+                                                <rect x="7" y="7.5" width="3.5" height="2.5" rx="0.5" fill="#185FA5" fill-opacity="0.5" />
+                                                <rect x="11.5" y="7.5" width="3.5" height="2.5" rx="0.5" fill="#185FA5" fill-opacity="0.5" />
+                                            </svg>
+                                            <span style="font-weight:500;color:#185FA5;">@vehicleCount</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-info text-white shadow-sm"
+                                                @onclick="() => ViewPersonDetail(person.IC_No)">
+                                            View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PAGINATION FOOTER -->
+                <div class="d-flex justify-content-between align-items-center mt-3 bg-white p-2 rounded shadow-sm border">
+                    <div class="d-flex align-items-center gap-2 text-muted small">
+                        <span>Show</span>
+                        <select class="form-select form-select-sm" style="width:auto;" @onchange="ChangePageSize">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>entries</span>
+                        <span class="ms-2">
+                            Showing @(totalFilteredCount == 0 ? 0 : (currentPage - 1) * pageSize + 1) to
+                            @(Math.Min(currentPage * pageSize, totalFilteredCount)) of @totalFilteredCount entries
+                        </span>
+                    </div>
+                    <nav aria-label="Person list pagination">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <button class="page-link" @onclick="() => { currentPage--; StateHasChanged(); }">Previous</button>
+                            </li>
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                var pageIndex = i;
+                                <li class="page-item @(currentPage == pageIndex ? "active" : "")">
+                                    <button class="page-link" @onclick="() => { currentPage = pageIndex; StateHasChanged(); }">@pageIndex</button>
+                                </li>
+                            }
+                            <li class="page-item @(currentPage == totalPages || totalPages == 0 ? "disabled" : "")">
+                                <button class="page-link" @onclick="() => { currentPage++; StateHasChanged(); }">Next</button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
     </div>
 </div>
-
-@if (persons == null)
-{
-    <p>Loading...</p>
-}
-else if (persons.Count == 0)
-{
-    string filterType = "";
-    if (!string.IsNullOrEmpty(MaritalStatus)) filterType = $"marital status: {MaritalStatus}";
-    else if (!string.IsNullOrEmpty(BirthYear)) filterType = $"birth year: {BirthYear}";
-    else if (!string.IsNullOrEmpty(NationalityName)) filterType = $"nationality: {NationalityName}";
-    else if (!string.IsNullOrEmpty(Gender) && Gender != "all" && Gender != "hasGender" && Gender != "hasNationality" && Gender != "hasMarital" && Gender != "hasBirthYear")
-        filterType = $"gender: {Gender}";
-    else if (Gender == "hasGender") filterType = "gender (has value)";
-    else if (Gender == "hasNationality") filterType = "nationality (has value)";
-    else if (Gender == "hasMarital") filterType = "marital status (has value)";
-    else if (Gender == "hasBirthYear") filterType = "birth year (has value)";
-
-    <p>No records found for @filterType</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>IC No</th>
-                    <th>Name</th>
-                    <th>Gender</th>
-                    <th>Marital Status</th>     
-                    <th>Birth Year</th>
-                    <th>Nationality</th>
-                    <th>Vehicle Count</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var person in persons)
-                {
-                    var vehicleCount = person.Vehicles?.Count ?? 0;
-                    <tr>
-                        <td>@person.IC_No</td>
-                        <td>@person.PersonName</td>
-                        <td style="text-align:center; vertical-align:middle;">
-                            @if (person.Gender == "Male")
-                            {
-                                <span style="display:inline-block; font-size:11px; padding:2px 10px; border-radius:999px; background:#E6F1FB; color:#0C447C;">Male</span>
-                            }
-                            else if (person.Gender == "Female")
-                            {
-                                <span style="display:inline-block; font-size:11px; padding:2px 10px; border-radius:999px; background:#FBEAF0; color:#72243E;">Female</span>
-                            }
-                            else
-                            {
-                                <span>-</span>
-                            }
-                        </td>
-                        <td style="text-align:center; vertical-align:middle;">
-                            @if (!string.IsNullOrEmpty(person.MaritalStatus))
-                            {
-                                string bgColor = "";
-                                string textColor = "";
-
-                                switch (person.MaritalStatus)
-                                {
-                                    case "Single":
-                                        bgColor = "#FEF3C7";
-                                        textColor = "#92400E";
-                                        break;
-                                    case "Married":
-                                        bgColor = "#D1FAE5";
-                                        textColor = "#065F46";
-                                        break;
-                                    case "Divorced":
-                                        bgColor = "#F3F4F6";
-                                        textColor = "#374151";
-                                        break;
-                                    case "Widowed":
-                                        bgColor = "#E9D5FF";
-                                        textColor = "#6B21A8";
-                                        break;
-                                    default:
-                                        bgColor = "#F3F4F6";
-                                        textColor = "#374151";
-                                        break;
-                                }
-
-                                <span style="display:inline-block; font-size:11px; padding:2px 10px; border-radius:999px; background:@bgColor; color:@textColor;">
-                                    @person.MaritalStatus
-                                </span>
-                            }
-                            else
-                            {
-                                <span>-</span>
-                            }
-                        </td>
-                        <td>@(person.BirthDate?.Year.ToString() ?? "-")</td>
-                        <td>@GetNationalityName(person.nationality_id)</td>
-                        <td style="text-align:center; vertical-align:middle;">
-                            <div style="display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;" @onclick="() => ShowVehiclePopup(person.IC_No, person.PersonName)">
-                                <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
-                                    <path d="M4.5 6L6.5 2H15.5L17.5 6" stroke="#185FA5" stroke-width="1.4" stroke-linecap="round" />
-                                    <rect x="1" y="6" width="20" height="7" rx="2" fill="#185FA5" fill-opacity="0.15" stroke="#185FA5" stroke-width="1.4" />
-                                    <circle cx="5" cy="13" r="2" fill="#185FA5" />
-                                    <circle cx="17" cy="13" r="2" fill="#185FA5" />
-                                    <rect x="7" y="7.5" width="3.5" height="2.5" rx="0.5" fill="#185FA5" fill-opacity="0.5" />
-                                    <rect x="11.5" y="7.5" width="3.5" height="2.5" rx="0.5" fill="#185FA5" fill-opacity="0.5" />
-                                </svg>
-                                <span style="font-weight:500; color:#185FA5;">@vehicleCount</span>
-                            </div>
-                        </td>
-                        <td style="text-align:center;">
-                            <button class="btn btn-sm btn-info" @onclick="() => ViewPersonDetail(person.IC_No)">
-                                View Full Details
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
-
-@code {
-    [Parameter] public string? Gender { get; set; }
-    [Parameter] public string? NationalityName { get; set; }
-    [Parameter] public string? MaritalStatus { get; set; }      
-    [Parameter] public string? BirthYear { get; set; }
-
-    private List<Vehicle> popupVehicles = new();
-    private List<EmployeeProfile>? persons;
-
-    private bool showModal = false;
-
-    private string popupPersonName = "";
-
-    private Dictionary<int, string> nationalityMap = new();
-
-
-    protected override async Task OnParametersSetAsync()
-    {
-        await LoadNationalities();
-        await LoadPersons();
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-    }
-
-    private async Task LoadNationalities()
-    {
-        var nationalities = await DbService.GetNationalitiesAsync();
-        nationalityMap = nationalities.ToDictionary(n => n.Id, n => n.Name);
-    }
-
-    private async Task LoadPersons()
-    {
-        var allEmployees = await DbService.GetEmployeesAsync();
-
-        // Filter by Birth Year
-        if (!string.IsNullOrEmpty(BirthYear))
-        {
-            persons = allEmployees.Where(e =>
-                e.BirthDate.HasValue &&
-                e.BirthDate.Value.Year.ToString() == BirthYear
-            ).ToList();
-        }
-        // Filter by Marital Status
-        else if (!string.IsNullOrEmpty(MaritalStatus))
-        {
-            persons = allEmployees.Where(e => e.MaritalStatus == MaritalStatus).ToList();
-        }
-        // Filter by Nationality Name
-        else if (!string.IsNullOrEmpty(NationalityName))
-        {
-            persons = allEmployees.Where(e =>
-                e.nationality_id.HasValue &&
-                nationalityMap.ContainsKey(e.nationality_id.Value) &&
-                nationalityMap[e.nationality_id.Value] == NationalityName
-            ).ToList();
-        }
-        // Filter by Gender
-        else if (Gender == "hasGender")
-        {
-            persons = allEmployees.Where(e => !string.IsNullOrEmpty(e.Gender)).ToList();
-        }
-        else if (Gender == "hasNationality")
-        {
-            persons = allEmployees.Where(e => e.nationality_id.HasValue).ToList();
-        }
-        else if (Gender == "hasMarital")
-        {
-            persons = allEmployees.Where(e => !string.IsNullOrEmpty(e.MaritalStatus)).ToList();
-        }
-        else if (Gender == "hasBirthYear")
-        {
-            persons = allEmployees.Where(e => e.BirthDate.HasValue).ToList();
-        }
-        else if (Gender == "all" || string.IsNullOrEmpty(Gender))
-        {
-            persons = allEmployees;
-        }
-        else
-        {
-            persons = allEmployees.Where(e => e.Gender == Gender).ToList();
-        }
-    }
-
-    private string GetNationalityName(int? id)
-    {
-        if (id.HasValue && nationalityMap.ContainsKey(id.Value))
-            return nationalityMap[id.Value];
-        return "-";
-    }
-
-    private void ViewPersonDetail(string icNo)
-    {
-        Navigation.NavigateTo($"/users?ic={icNo}", forceLoad: true);
-    }
-
-    private void GoToVehicle(string icNo)
-    {
-        Navigation.NavigateTo("/users?ic=" + icNo + "&tab=vehicle&source=personlistpage");
-    }
-
-    private void ShowVehiclePopup(string icNo, string name)
-    {
-        var person = persons.FirstOrDefault(p => p.IC_No == icNo);
-        popupVehicles = person?.Vehicles ?? new List<Vehicle>();
-        popupPersonName = name;
-        showModal = true;
-    }
-}

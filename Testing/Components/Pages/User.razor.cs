@@ -20,6 +20,9 @@ namespace Testing.Components.Pages
         [SupplyParameterFromQuery(Name = "source")]
         public string? Source { get; set; }
 
+        [Inject]
+        public NavigationManager Navigation { get; set; } = default!;
+
 
         private List<EmployeeProfile>? EmployeesList;
         private List<Vehicle> vehicleList = new();
@@ -216,6 +219,7 @@ namespace Testing.Components.Pages
         #region onParameterAsync
         protected override async Task OnParametersSetAsync()
         {
+            scrolledToDocs = false;
             if (!string.IsNullOrEmpty(Ic))
             {
                 await ViewRecord(Ic);
@@ -398,6 +402,12 @@ namespace Testing.Components.Pages
         #region ResetForm
         private void ResetForm()
         {
+            if (Source == "personlist" || Source == "personlistpage")
+            {
+                Navigation.NavigateTo("/personlist");
+                return;
+            }
+
             editingVehicle = new Vehicle();
             vehicleList = new List<Vehicle>();
             editingEmployee = new EmployeeProfile();
@@ -412,6 +422,7 @@ namespace Testing.Components.Pages
             activeTab = "user";   
             Source = null;        
             Tab = null;           
+            scrolledToDocs = false;
         }
         #endregion
 
